@@ -32,7 +32,12 @@ jobs:
             tests/*.sh
 
       - name: actionlint
-        uses: raven-actions/actionlint@3a24062651993d40fed1019b58ac6fbdfbf276cc # v2.0.1
+        # Run the actionlint binary directly (the documented install method) rather
+        # than a wrapper action — the wrapper crashed under the Node 24 runner with
+        # ERR_PACKAGE_PATH_NOT_EXPORTED in @actions/tool-cache.
+        run: |
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
 
       - name: terraform fmt + validate
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
