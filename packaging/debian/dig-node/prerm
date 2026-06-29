@@ -1,0 +1,20 @@
+#!/bin/sh
+# prerm — dig-node: stop + disable the service before the files are removed, so a
+# remove/upgrade does not leave a running process pointed at a deleted binary.
+set -e
+
+case "$1" in
+  remove | upgrade | deconfigure)
+    if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; then
+      systemctl stop dig-node.service >/dev/null 2>&1 || true
+      # On upgrade keep it enabled (postinst re-enables); on remove, disable.
+      if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
+        systemctl disable dig-node.service >/dev/null 2>&1 || true
+      fi
+    fi
+    ;;
+  failed-upgrade) ;;
+  *) ;;
+esac
+
+exit 0
