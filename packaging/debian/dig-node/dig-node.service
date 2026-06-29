@@ -1,0 +1,51 @@
+[Unit]
+# dig-node — the DIG Network content node, installed by the dig-node .deb and
+# enabled+started by its postinst (systemctl enable --now dig-node). It serves and
+# caches DIG content and exposes the dig RPC read interface on loopback.
+Description=DIG Network node (dig:// content node + dig RPC)
+Documentation=https://docs.dig.net
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Runs as the unprivileged dig-node system account created by postinst — never root.
+User=dig-node
+Group=dig-node
+# Loopback-bound by default: the node's RPC is a LOCAL read interface, not a public
+# service. The dig-node binary is configured purely by environment (its `run`
+# subcommand takes no flags), reading DIG_COMPANION_HOST / DIG_COMPANION_PORT (the
+# bind address, defaulting to 127.0.0.1:8080) and DIG_RPC_UPSTREAM (the upstream it
+# blind-fetches ciphertext+proofs from on a cache miss). Override any of these in a
+# drop-in: `systemctl edit dig-node`.
+Environment=DIG_COMPANION_HOST=127.0.0.1
+Environment=DIG_COMPANION_PORT=8080
+Environment=DIG_RPC_UPSTREAM=https://rpc.dig.net
+# Persistent cache: systemd creates /var/lib/dig-node owned by the service account
+# and points HOME there so dig-node's `.dig` cache lands under it.
+Environment=HOME=/var/lib/dig-node
+StateDirectory=dig-node
+StateDirectoryMode=0750
+WorkingDirectory=/var/lib/dig-node
+ExecStart=/usr/bin/dig-node run
+Restart=on-failure
+RestartSec=5
+
+# Hardening — a content node needs no special privileges. These are conservative
+# defaults that still allow loopback networking + writing the cache dir.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+ReadWritePaths=/var/lib/dig-node
+
+[Install]
+WantedBy=multi-user.target

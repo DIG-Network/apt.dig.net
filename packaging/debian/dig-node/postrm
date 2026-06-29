@@ -1,0 +1,31 @@
+#!/bin/sh
+# postrm — dig-node: reload systemd after removal; on `purge`, drop the cache dir and
+# the service account. Conservative: a plain `remove` keeps user data (the cache);
+# only `purge` deletes it, per Debian policy.
+set -e
+
+DIG_USER="dig-node"
+DIG_GROUP="dig-node"
+DIG_CACHE="/var/lib/dig-node"
+
+case "$1" in
+  purge)
+    rm -rf "$DIG_CACHE" || true
+    if getent passwd "$DIG_USER" >/dev/null 2>&1; then
+      if command -v deluser >/dev/null 2>&1; then deluser --system "$DIG_USER" >/dev/null 2>&1 || true
+      else userdel "$DIG_USER" >/dev/null 2>&1 || true; fi
+    fi
+    if getent group "$DIG_GROUP" >/dev/null 2>&1; then
+      if command -v delgroup >/dev/null 2>&1; then delgroup --system "$DIG_GROUP" >/dev/null 2>&1 || true
+      else groupdel "$DIG_GROUP" >/dev/null 2>&1 || true; fi
+    fi
+    ;;
+  remove | upgrade | failed-upgrade | abort-install | abort-upgrade | disappear) ;;
+  *) ;;
+esac
+
+if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; then
+  systemctl daemon-reload >/dev/null 2>&1 || true
+fi
+
+exit 0

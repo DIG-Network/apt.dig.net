@@ -1,0 +1,53 @@
+#!/bin/sh
+# postinst — dig-node: create the service account + cache dir, then enable+start the
+# systemd unit (systemctl enable --now dig-node). Idempotent: safe to re-run on
+# upgrade/reconfigure. Follows Debian maintainer-script conventions (set -e; act on
+# `configure`).
+set -e
+
+DIG_USER="dig-node"
+DIG_GROUP="dig-node"
+DIG_CACHE="/var/lib/dig-node"
+
+case "$1" in
+  configure)
+    # System group + user (no login, no home beyond the cache dir). `adduser` is a
+    # declared dependency; fall back to useradd/groupadd if it is somehow absent.
+    if ! getent group "$DIG_GROUP" >/dev/null 2>&1; then
+      if command -v addgroup >/dev/null 2>&1; then
+        addgroup --system "$DIG_GROUP"
+      else
+        groupadd --system "$DIG_GROUP"
+      fi
+    fi
+    if ! getent passwd "$DIG_USER" >/dev/null 2>&1; then
+      if command -v adduser >/dev/null 2>&1; then
+        adduser --system --ingroup "$DIG_GROUP" --home "$DIG_CACHE" \
+          --no-create-home --disabled-login --gecos "DIG Network node" "$DIG_USER"
+      else
+        useradd --system --gid "$DIG_GROUP" --home-dir "$DIG_CACHE" \
+          --no-create-home --shell /usr/sbin/nologin "$DIG_USER"
+      fi
+    fi
+
+    # Cache dir, owned by the service account (systemd also enforces this via
+    # StateDirectory, but create it now so a manual `dig-node run` works too).
+    mkdir -p "$DIG_CACHE"
+    chown "$DIG_USER:$DIG_GROUP" "$DIG_CACHE"
+    chmod 0750 "$DIG_CACHE"
+    ;;
+  abort-upgrade | abort-remove | abort-deconfigure) ;;
+  *) ;;
+esac
+
+# Register, enable, and (re)start the unit via the standard debhelper-style snippet.
+# `deb-systemd-helper` is part of init-system-helpers (present on every systemd
+# Debian/Ubuntu); guard so a non-systemd container install does not fail.
+if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; then
+  systemctl daemon-reload >/dev/null 2>&1 || true
+  # enable --now == enable + start (the task's contract).
+  systemctl enable --now dig-node.service >/dev/null 2>&1 || \
+    echo "dig-node: could not enable/start the service automatically; run: sudo systemctl enable --now dig-node" >&2
+fi
+
+exit 0

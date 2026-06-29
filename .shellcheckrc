@@ -1,0 +1,7 @@
+# shellcheck config for apt.dig.net.
+# Follow `# shellcheck source=` directives so cross-file symbols (the config.sh PKG_*
+# vars consumed by indirect expansion) resolve instead of flagging SC2154.
+external-sources=true
+# SC1091: don't fail when a sourced path can't be opened from the checker's CWD; the
+# source= directives above resolve it where it matters.
+disable=SC1091
