@@ -1,0 +1,38 @@
+# apt.dig.net
+
+> The DIG Network APT repository. Ubuntu/Debian users install the DIG ecosystem with
+> `apt`: `dig-node` (the node service, run via systemd) and `digstore` (the CLI).
+> Flat, GPG-signed repository (suite `stable`, component `main`).
+
+## Install
+
+```
+curl -fsSL https://apt.dig.net/dig.gpg | sudo gpg --dearmor -o /usr/share/keyrings/dig.gpg
+echo "deb [signed-by=/usr/share/keyrings/dig.gpg] https://apt.dig.net stable main" | sudo tee /etc/apt/sources.list.d/dig.list
+sudo apt update && sudo apt install dig-node digstore
+systemctl status dig-node
+```
+
+## Packages
+
+- `dig-node` — DIG node service. Binary at `/usr/bin/dig-node`; installs + enables
+  `dig-node.service` (systemd), running as the `dig-node` system account, loopback-bound
+  (`127.0.0.1:8080`), cache at `/var/lib/dig-node`. Configure via the unit env
+  `DIG_COMPANION_HOST` / `DIG_COMPANION_PORT` / `DIG_RPC_UPSTREAM` (`systemctl edit dig-node`).
+- `digstore` — the `digstore` content-addressable store CLI on `PATH`.
+
+Architectures: `amd64` (and `arm64` when upstream publishes a matching release asset).
+
+## Machine-readable
+
+- Signing public key: https://apt.dig.net/dig.gpg
+- Repo metadata: https://apt.dig.net/dists/stable/Release ,
+  https://apt.dig.net/dists/stable/InRelease (signed) ,
+  https://apt.dig.net/dists/stable/main/binary-amd64/Packages
+- Package pool: https://apt.dig.net/pool/main/
+
+## Source
+
+- Repo: https://github.com/DIG-Network/apt.dig.net
+- Packaging is driven from `packaging/config.sh`; debs are built from the upstream
+  GitHub releases of DIG-Network/digstore and DIG-Network/dig-node.
