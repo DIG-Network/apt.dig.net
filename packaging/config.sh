@@ -95,8 +95,9 @@ PKG_dig_node_SECTION="net"
 PKG_dig_node_DEPENDS="libc6, adduser"
 PKG_dig_node_HOMEPAGE="https://dig.net"
 PKG_dig_node_MAINTAINER="DIG Network <packages@dig.net>"
-PKG_dig_node_DESC_SHORT="DIG Network node service (dig:// content node)"
-PKG_dig_node_DESC_LONG=" dig-node is the DIG Network node: it serves and caches DIG content, runs
+PKG_dig_node_DESC_SHORT="DIG Network node service (chia:// content node)"
+PKG_dig_node_DESC_LONG=" dig-node is the DIG Network node: it serves and caches verified DIG
+ content (the chia:// content a browser or the DIG extension opens), runs
  §21 whole-store sync, and exposes the dig RPC read interface on loopback.
  Installed as a systemd service (dig-node.service) running as the dig-node
  system account, bound to localhost."

@@ -8,28 +8,109 @@
       name="description"
       content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node (the node service) and digstore (the CLI). Signed APT repository."
     />
+    <meta name="theme-color" content="#5800d6" />
     <link rel="canonical" href="https://apt.dig.net/" />
     <!-- Machine-readable entry point for agents (CLAUDE.md: agent-friendly by default). -->
     <link rel="alternate" type="text/plain" href="https://apt.dig.net/llms.txt" />
+    <!-- Canonical DIG product type: Space Grotesk (display/body) + Space Mono (code). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    />
     <style>
-      :root { color-scheme: light dark; }
-      body { font: 16px/1.6 system-ui, sans-serif; max-width: 46rem; margin: 3rem auto; padding: 0 1.2rem; }
-      h1 { font-size: 1.6rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
-      pre { background: #1113; padding: 1rem; border-radius: 8px; overflow-x: auto; }
-      code { font-family: ui-monospace, monospace; }
-      footer { margin-top: 3rem; font-size: 0.85rem; opacity: 0.7; }
-      a { color: inherit; }
+      /* DIG product theme — clean WHITE surface with the canonical violet→magenta
+         accent (SYSTEM.md "Canonical terminology & branding"). Tokens mirror dig.net's
+         light tokens so apt.dig.net reads as part of one product, not a stray page. */
+      :root {
+        --dig-violet: #5800d6;
+        --dig-magenta: #ff00de;
+        --grad-brand: linear-gradient(115deg, #5800d6, #ff00de);
+        --bg: #ffffff;
+        --panel: #f3f1fb;
+        --fg1: #101132;
+        --fg2: #45417a;
+        --border: #e4e0f5;
+        --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+        --font-mono: "Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        font: 16px/1.6 var(--font-display);
+        color: var(--fg1);
+        background: var(--bg);
+        max-width: 46rem;
+        margin: 0 auto;
+        padding: 3rem 1.2rem;
+      }
+      /* DIGHUb-family brandmark: the wordmark rendered in the brand gradient so the
+         page is unmistakably part of the DIG ecosystem. */
+      .brand {
+        display: inline-block;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        background: var(--grad-brand);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      header { margin-bottom: 2rem; }
+      .eyebrow {
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--dig-violet);
+      }
+      h1 { font-size: 1.9rem; margin: 0.3rem 0 0; letter-spacing: -0.02em; }
+      h2 {
+        font-size: 1.2rem;
+        margin-top: 2.4rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border);
+      }
+      p { color: var(--fg2); }
+      a { color: var(--dig-violet); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      strong { color: var(--fg1); }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        padding: 1rem 1.1rem;
+        border-radius: 14px;
+        overflow-x: auto;
+      }
+      code { font-family: var(--font-mono); font-size: 0.92em; }
+      pre code { color: var(--fg1); }
+      :not(pre) > code {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.1em 0.35em;
+      }
+      ul { color: var(--fg2); }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1.2rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.85rem;
+        color: var(--fg2);
+      }
+      footer a { color: var(--fg2); }
     </style>
   </head>
   <body>
-    <main>
+    <header>
+      <div class="eyebrow"><span class="brand">DIGHUb</span> · DIG Network</div>
       <h1 data-testid="title">DIG Network APT repository</h1>
       <p>
         Install the DIG ecosystem on Ubuntu/Debian with <code>apt</code>:
         <strong>dig-node</strong> (the node service, run via systemd) and
         <strong>digstore</strong> (the content-addressable store CLI).
       </p>
-
+    </header>
+    <main>
       <h2>Add the repository</h2>
       <pre data-testid="install-steps"><code># 1. Trust the DIG signing key
 curl -fsSL https://apt.dig.net/dig.gpg | sudo gpg --dearmor -o /usr/share/keyrings/dig.gpg
@@ -51,7 +132,8 @@ systemctl status dig-node</code></pre>
           <code>dig-node</code> system account, a cache at
           <code>/var/lib/dig-node</code>, and enables + starts
           <code>dig-node.service</code> (loopback-bound on
-          <code>127.0.0.1:8080</code>).</li>
+          <code>127.0.0.1:8080</code>). It serves the verified
+          <code>chia://</code> content a DIG browser or extension opens.</li>
         <li><code>digstore</code> — the <code>digstore</code> CLI on your
           <code>PATH</code>.</li>
       </ul>
@@ -65,7 +147,9 @@ systemctl status dig-node</code></pre>
     </main>
     <footer>
       <a href="https://dig.net">dig.net</a> ·
-      <a href="https://docs.dig.net">docs.dig.net</a> ·
+      <a href="https://docs.dig.net/docs/run-a-node">docs.dig.net</a> ·
+      <a href="https://status.dig.net">status.dig.net</a> ·
+      <a href="https://discord.gg/dignetwork">Discord</a> ·
       <a href="https://github.com/DIG-Network">GitHub</a>
     </footer>
   </body>

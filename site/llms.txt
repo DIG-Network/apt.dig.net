@@ -15,10 +15,13 @@ systemctl status dig-node
 
 ## Packages
 
-- `dig-node` — DIG node service. Binary at `/usr/bin/dig-node`; installs + enables
+- `dig-node` — DIG node service. Serves the verified `chia://` content a DIG browser or
+  extension opens. Binary at `/usr/bin/dig-node`; installs + enables
   `dig-node.service` (systemd), running as the `dig-node` system account, loopback-bound
   (`127.0.0.1:8080`), cache at `/var/lib/dig-node`. Configure via the unit env
   `DIG_COMPANION_HOST` / `DIG_COMPANION_PORT` / `DIG_RPC_UPSTREAM` (`systemctl edit dig-node`).
+  (The `DIG_COMPANION_*` names are the binary's stable env-var names, kept under the
+  node's legacy `dig-companion` name as a config/wire contract.)
 - `digstore` — the `digstore` content-addressable store CLI on `PATH`.
 
 Architectures: `amd64` (and `arm64` when upstream publishes a matching release asset).

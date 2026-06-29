@@ -2,8 +2,8 @@
 # dig-node — the DIG Network content node, installed by the dig-node .deb and
 # enabled+started by its postinst (systemctl enable --now dig-node). It serves and
 # caches DIG content and exposes the dig RPC read interface on loopback.
-Description=DIG Network node (dig:// content node + dig RPC)
-Documentation=https://docs.dig.net
+Description=DIG Network node (chia:// content node + dig RPC)
+Documentation=https://docs.dig.net/docs/run-a-node
 After=network-online.target
 Wants=network-online.target
 
@@ -18,6 +18,9 @@ Group=dig-node
 # bind address, defaulting to 127.0.0.1:8080) and DIG_RPC_UPSTREAM (the upstream it
 # blind-fetches ciphertext+proofs from on a cache miss). Override any of these in a
 # drop-in: `systemctl edit dig-node`.
+# (DIG_COMPANION_HOST / DIG_COMPANION_PORT are the binary's stable env-var names —
+# kept under the node's legacy "dig-companion" name as a wire/config contract, even
+# though the service is now "dig-node". An upstream DIG_NODE_* alias is tracked.)
 Environment=DIG_COMPANION_HOST=127.0.0.1
 Environment=DIG_COMPANION_PORT=8080
 Environment=DIG_RPC_UPSTREAM=https://rpc.dig.net

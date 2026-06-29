@@ -33,7 +33,10 @@ systemctl status dig-node
 | `digstore` | `/usr/bin/digstore`                        | no — just the CLI on `PATH` |
 
 Configure the node with `systemctl edit dig-node` (env: `DIG_COMPANION_HOST`,
-`DIG_COMPANION_PORT`, `DIG_RPC_UPSTREAM`).
+`DIG_COMPANION_PORT`, `DIG_RPC_UPSTREAM`). The `DIG_COMPANION_*` names are the
+binary's stable env-var names — kept under the node's legacy `dig-companion` name as a
+config/wire contract even though the service is now `dig-node`. See the docs:
+<https://docs.dig.net/docs/run-a-node>.
 
 ---
 
