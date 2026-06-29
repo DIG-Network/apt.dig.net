@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>apt.dig.net — DIG Network APT repository</title>
+    <meta
+      name="description"
+      content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node (the node service) and digstore (the CLI). Signed APT repository."
+    />
+    <link rel="canonical" href="https://apt.dig.net/" />
+    <!-- Machine-readable entry point for agents (CLAUDE.md: agent-friendly by default). -->
+    <link rel="alternate" type="text/plain" href="https://apt.dig.net/llms.txt" />
+    <style>
+      :root { color-scheme: light dark; }
+      body { font: 16px/1.6 system-ui, sans-serif; max-width: 46rem; margin: 3rem auto; padding: 0 1.2rem; }
+      h1 { font-size: 1.6rem; } h2 { font-size: 1.15rem; margin-top: 2rem; }
+      pre { background: #1113; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+      code { font-family: ui-monospace, monospace; }
+      footer { margin-top: 3rem; font-size: 0.85rem; opacity: 0.7; }
+      a { color: inherit; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 data-testid="title">DIG Network APT repository</h1>
+      <p>
+        Install the DIG ecosystem on Ubuntu/Debian with <code>apt</code>:
+        <strong>dig-node</strong> (the node service, run via systemd) and
+        <strong>digstore</strong> (the content-addressable store CLI).
+      </p>
+
+      <h2>Add the repository</h2>
+      <pre data-testid="install-steps"><code># 1. Trust the DIG signing key
+curl -fsSL https://apt.dig.net/dig.gpg | sudo gpg --dearmor -o /usr/share/keyrings/dig.gpg
+
+# 2. Add the apt source
+echo "deb [signed-by=/usr/share/keyrings/dig.gpg] https://apt.dig.net stable main" \
+  | sudo tee /etc/apt/sources.list.d/dig.list
+
+# 3. Install
+sudo apt update
+sudo apt install dig-node digstore
+
+# 4. The node runs as a systemd service
+systemctl status dig-node</code></pre>
+
+      <h2>What gets installed</h2>
+      <ul>
+        <li><code>dig-node</code> — the DIG node service. The package creates a
+          <code>dig-node</code> system account, a cache at
+          <code>/var/lib/dig-node</code>, and enables + starts
+          <code>dig-node.service</code> (loopback-bound on
+          <code>127.0.0.1:8080</code>).</li>
+        <li><code>digstore</code> — the <code>digstore</code> CLI on your
+          <code>PATH</code>.</li>
+      </ul>
+
+      <h2>Machine-readable</h2>
+      <ul>
+        <li><a href="/llms.txt">llms.txt</a> — agent entry point</li>
+        <li><a href="/dig.gpg">dig.gpg</a> — the signing public key</li>
+        <li><a href="/dists/stable/Release">dists/stable/Release</a> — repo metadata</li>
+      </ul>
+    </main>
+    <footer>
+      <a href="https://dig.net">dig.net</a> ·
+      <a href="https://docs.dig.net">docs.dig.net</a> ·
+      <a href="https://github.com/DIG-Network">GitHub</a>
+    </footer>
+  </body>
+</html>

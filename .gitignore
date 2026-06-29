@@ -1,0 +1,14 @@
+# Build output (the assembled repo site) — produced by `make repo`, never committed.
+/dist/
+/build/
+
+# Terraform local state + plugin cache (the .lock.hcl IS committed).
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfplan
+infra/.terraform.tfstate.lock.info
+
+# Local GPG scratch used by tests
+*.gpg-agent
+/.gnupg-test/
