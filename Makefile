@@ -31,9 +31,9 @@ debs:
 
 # Assemble + sign the repo. Pass GPG_FPR=<fingerprint> to sign (CI imports the key
 # from $APT_GPG_PRIVATE_KEY and passes its fingerprint). The static site (index.html,
-# llms.txt) is copied into the repo root.
+# llms.txt, sitemap.xml, robots.txt, og-image.svg) is copied into the repo root.
 repo: debs
-	cp site/index.html site/llms.txt "$(DIST)/" 2>/dev/null || true
+	cp site/index.html site/llms.txt site/sitemap.xml site/robots.txt site/og-image.svg "$(DIST)/" 2>/dev/null || true
 	bash packaging/repo/generate-repo.sh "$(DIST)" "$(GPG_FPR)"
 
 fmt:

@@ -101,5 +101,16 @@ else
   printf 'skip - gpg not present; signature legs not exercised\n'
 fi
 
+# --- feed.xml: package-list Atom feed (CLAUDE.md §6.6: ship a feed where content
+# warrants it — apt.dig.net's published-package list is a good fit since there is
+# no per-build version-history state to build a richer changelog feed from yet).
+feed="$work/site/feed.xml"
+check "feed.xml exists" "1" "$([ -f "$feed" ] && echo 1 || echo 0)"
+feedbody="$(cat "$feed" 2>/dev/null || true)"
+contains "feed.xml is a well-formed Atom feed" "$feedbody" '<feed xmlns="http://www.w3.org/2005/Atom">'
+contains "feed.xml lists digstore"             "$feedbody" "<title>digstore"
+contains "feed.xml lists dig-node"             "$feedbody" "<title>dig-node"
+contains "feed.xml self link"                  "$feedbody" 'rel="self"'
+
 if [ "$fails" -ne 0 ]; then printf '\n%d assertion(s) failed\n' "$fails" >&2; exit 1; fi
 printf '\nall repo-metadata assertions passed\n'

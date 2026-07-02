@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  apt.dig.net has a single public page (the landing page at /). Kept in
+  source (site/sitemap.xml) — the Makefile's `repo` target copies it into
+  dist/ (the deployed repo root) alongside index.html/llms.txt/robots.txt.
+  Update <lastmod> when the public page or its content model changes.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://apt.dig.net/</loc>
+    <lastmod>2026-07-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

@@ -10,8 +10,44 @@
     />
     <meta name="theme-color" content="#5800d6" />
     <link rel="canonical" href="https://apt.dig.net/" />
+    <meta property="og:title" content="DIG Network APT repository" />
+    <meta
+      property="og:description"
+      content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node (the node service) and digstore (the CLI). Signed APT repository."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://apt.dig.net/" />
+    <meta property="og:site_name" content="DIG Network APT repository" />
+    <meta property="og:image" content="https://apt.dig.net/og-image.svg" />
+    <meta property="og:image:alt" content="DIG Network APT repository wordmark" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="DIG Network APT repository" />
+    <meta
+      name="twitter:description"
+      content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node and digstore. Signed APT repository."
+    />
+    <meta name="twitter:image" content="https://apt.dig.net/og-image.svg" />
     <!-- Machine-readable entry point for agents (CLAUDE.md: agent-friendly by default). -->
     <link rel="alternate" type="text/plain" href="https://apt.dig.net/llms.txt" />
+    <link rel="alternate" type="application/atom+xml" href="https://apt.dig.net/feed.xml" title="DIG Network APT repository — published packages" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "DIG Network APT repository",
+      "url": "https://apt.dig.net/",
+      "description": "Signed APT repository for the DIG Network ecosystem on Ubuntu/Debian: dig-node (the node service) and digstore (the content-addressable store CLI).",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Debian, Ubuntu",
+      "isAccessibleForFree": true,
+      "softwareVersion": "stable",
+      "publisher": {
+        "@type": "Organization",
+        "name": "DIG Network",
+        "url": "https://dig.net/"
+      }
+    }
+    </script>
     <!-- Canonical DIG product type: Space Grotesk (display/body) + Space Mono (code). -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -73,6 +109,11 @@
       p { color: var(--fg2); }
       a { color: var(--dig-violet); text-decoration: none; }
       a:hover { text-decoration: underline; }
+      /* Links inline within body text (main content, not the header/footer nav)
+         must not rely on color alone (WCAG 1.4.1 Use of Color) — underline them
+         so they are distinguishable without color perception. */
+      main a { text-decoration: underline; text-underline-offset: 0.15em; }
+      main a:hover { text-decoration-thickness: 2px; }
       strong { color: var(--fg1); }
       pre {
         background: var(--panel);
@@ -80,6 +121,13 @@
         padding: 1rem 1.1rem;
         border-radius: 14px;
         overflow-x: auto;
+      }
+      /* A horizontally-scrollable region must itself be reachable by keyboard
+         (WCAG 2.1.1 / axe scrollable-region-focusable) so a keyboard-only user
+         can scroll it without a pointer. */
+      pre:focus-visible {
+        outline: 3px solid var(--dig-violet);
+        outline-offset: 2px;
       }
       code { font-family: var(--font-mono); font-size: 0.92em; }
       pre code { color: var(--fg1); }
@@ -98,9 +146,39 @@
         color: var(--fg2);
       }
       footer a { color: var(--fg2); }
+
+      /* ---------- skip link + focus visibility (WCAG 2.2 AA: 2.4.1, 2.4.11) ---------- */
+      .skip-link {
+        position: absolute;
+        top: -48px;
+        left: 12px;
+        z-index: 100;
+        background: var(--dig-violet);
+        color: #fff;
+        padding: 0.6rem 1.1rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: top 0.15s ease;
+      }
+      .skip-link:focus {
+        top: 12px;
+        text-decoration: none;
+      }
+      a:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 3px solid var(--dig-violet);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      main:focus-visible { outline: none; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .skip-link { transition: none; }
+      }
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <header>
       <div class="eyebrow"><span class="brand">DIGHUb</span> · DIG Network</div>
       <h1 data-testid="title">DIG Network APT repository</h1>
@@ -110,9 +188,9 @@
         <strong>digstore</strong> (the content-addressable store CLI).
       </p>
     </header>
-    <main>
+    <main id="main-content" tabindex="-1">
       <h2>Add the repository</h2>
-      <pre data-testid="install-steps"><code># 1. Trust the DIG signing key
+      <pre data-testid="install-steps" tabindex="0" role="region" aria-label="Install commands (scrollable)"><code># 1. Trust the DIG signing key
 curl -fsSL https://apt.dig.net/dig.gpg | sudo gpg --dearmor -o /usr/share/keyrings/dig.gpg
 
 # 2. Add the apt source
@@ -141,16 +219,21 @@ systemctl status dig-node</code></pre>
       <h2>Machine-readable</h2>
       <ul>
         <li><a href="/llms.txt">llms.txt</a> — agent entry point</li>
+        <li><a href="/sitemap.xml">sitemap.xml</a> — XML sitemap</li>
+        <li><a href="/robots.txt">robots.txt</a> — crawl policy</li>
+        <li><a href="/feed.xml">feed.xml</a> — Atom feed of currently published packages</li>
         <li><a href="/dig.gpg">dig.gpg</a> — the signing public key</li>
         <li><a href="/dists/stable/Release">dists/stable/Release</a> — repo metadata</li>
       </ul>
     </main>
     <footer>
-      <a href="https://dig.net">dig.net</a> ·
-      <a href="https://docs.dig.net/docs/run-a-node">docs.dig.net</a> ·
-      <a href="https://status.dig.net">status.dig.net</a> ·
-      <a href="https://discord.gg/dignetwork">Discord</a> ·
-      <a href="https://github.com/DIG-Network">GitHub</a>
+      <nav aria-label="DIG Network sites">
+        <a href="https://dig.net">dig.net</a> ·
+        <a href="https://docs.dig.net/docs/run-a-node">docs.dig.net</a> ·
+        <a href="https://status.dig.net">status.dig.net</a> ·
+        <a href="https://discord.gg/dignetwork">Discord</a> ·
+        <a href="https://github.com/DIG-Network">GitHub</a>
+      </nav>
     </footer>
   </body>
 </html>

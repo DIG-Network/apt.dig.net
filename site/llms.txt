@@ -33,6 +33,9 @@ Architectures: `amd64` (and `arm64` when upstream publishes a matching release a
   https://apt.dig.net/dists/stable/InRelease (signed) ,
   https://apt.dig.net/dists/stable/main/binary-amd64/Packages
 - Package pool: https://apt.dig.net/pool/main/
+- Sitemap: https://apt.dig.net/sitemap.xml
+- Crawl policy: https://apt.dig.net/robots.txt
+- Package-list feed (Atom, currently published packages): https://apt.dig.net/feed.xml
 
 ## Source
 

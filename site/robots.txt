@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://apt.dig.net/sitemap.xml
+
+# Machine-readable entry point for agents (see https://llmstxt.org/):
+# https://apt.dig.net/llms.txt
