@@ -38,6 +38,17 @@ binary's stable env-var names — kept under the node's legacy `dig-companion` n
 config/wire contract even though the service is now `dig-node`. See the docs:
 <https://docs.dig.net/docs/run-a-node>.
 
+### Machine-readable
+
+| Path | What |
+| ---- | ---- |
+| [`/llms.txt`](site/llms.txt) | Agent entry point (site map + install contract) |
+| [`/sitemap.xml`](site/sitemap.xml) | XML sitemap (one public page) |
+| [`/robots.txt`](site/robots.txt) | Crawl policy — full indexing allowed, points at `sitemap.xml` |
+| `/feed.xml` | Atom feed listing the currently published packages (generated at build time by `generate_feed()` in `packaging/repo/generate-repo.sh`) |
+| `/dig.gpg` | The signing public key |
+| `/dists/stable/Release` | Repo metadata |
+
 ---
 
 ## Architecture
@@ -64,7 +75,10 @@ DIG-Network/dig-node   ─┘   (download asset → lay     │   make repo → 
   contract").
 - **`packaging/repo/generate-repo.sh`** — turns the pool of `.debs` into a flat,
   GPG-signed apt repo (`Packages`/`Packages.gz`/`Release`/`Release.gpg`/`InRelease`)
-  for `stable main`, and exports the signing **public** key to `dig.gpg`.
+  for `stable main`, exports the signing **public** key to `dig.gpg`, and writes
+  `feed.xml` (an Atom feed of the currently published packages, via `generate_feed()`).
+- **`site/`** — the static landing page (`index.html`), `llms.txt`, `sitemap.xml`, and
+  `robots.txt`; copied verbatim into the repo root by `make repo`.
 - **`infra/`** — Terraform for the S3 bucket + CloudFront + Route53 + ACM.
 - **`.github/workflows/deploy.yml`** — build → sign → S3 sync → CloudFront invalidate.
 - **`.github/workflows/ci.yml`** — shellcheck + actionlint + terraform fmt/validate +
