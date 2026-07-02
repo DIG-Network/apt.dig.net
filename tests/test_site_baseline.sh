@@ -85,5 +85,14 @@ contains "Makefile copies robots.txt into dist"  "$makefile" "robots.txt"
 contains "Makefile copies og-image.svg into dist" "$makefile" "og-image.svg"
 file_exists "site/og-image.svg exists" "$SITE/og-image.svg"
 
+# --- accessibility gate wiring (CLAUDE.md §6.6: a CONCRETE automated AT tier) ---
+# The real WCAG 2.2 AA scan lives in tests/a11y (axe-core via Playwright) and runs
+# from tests/run.sh + the CI a11y job. Pin its presence so it can't be dropped;
+# the actual 0-violations assertion runs in that harness against a real browser.
+file_exists "tests/a11y/axe.test.mjs exists (WCAG 2.2 AA axe gate)" "$ROOT/tests/a11y/axe.test.mjs"
+file_exists "tests/a11y/package.json exists" "$ROOT/tests/a11y/package.json"
+runsh="$(cat "$ROOT/tests/run.sh")"
+contains "tests/run.sh invokes the a11y (axe) gate" "$runsh" "a11y (axe WCAG 2.2 AA)"
+
 if [ "$fails" -ne 0 ]; then printf '\n%d assertion(s) failed\n' "$fails" >&2; exit 1; fi
 printf '\nall frontend-baseline assertions passed\n'
