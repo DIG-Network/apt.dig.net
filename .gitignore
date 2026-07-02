@@ -12,3 +12,9 @@ infra/.terraform.tfstate.lock.info
 # Local GPG scratch used by tests
 *.gpg-agent
 /.gnupg-test/
+
+# Accessibility test (axe via Playwright) — deps + downloaded browsers are installed
+# in CI; only the source + lockfile are committed.
+tests/a11y/node_modules/
+tests/a11y/test-results/
+tests/a11y/playwright-report/

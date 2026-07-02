@@ -32,11 +32,10 @@ systemctl status dig-node
 | `dig-node` | `/usr/bin/dig-node` + `dig-node.service`   | yes — `systemctl enable --now dig-node` (loopback `127.0.0.1:8080`, runs as the `dig-node` system account, cache at `/var/lib/dig-node`) |
 | `digstore` | `/usr/bin/digstore`                        | no — just the CLI on `PATH` |
 
-Configure the node with `systemctl edit dig-node` (env: `DIG_COMPANION_HOST`,
-`DIG_COMPANION_PORT`, `DIG_RPC_UPSTREAM`). The `DIG_COMPANION_*` names are the
-binary's stable env-var names — kept under the node's legacy `dig-companion` name as a
-config/wire contract even though the service is now `dig-node`. See the docs:
-<https://docs.dig.net/docs/run-a-node>.
+Configure the node with `systemctl edit dig-node` (env: `DIG_NODE_HOST`,
+`DIG_NODE_PORT`, `DIG_RPC_UPSTREAM`). `DIG_NODE_HOST` / `DIG_NODE_PORT` are the
+dig-node binary's stable env-var names — the unit's `Environment=` lines match them.
+See the docs: <https://docs.dig.net/docs/run-a-node>.
 
 ### Machine-readable
 
@@ -94,19 +93,19 @@ time. The asset names packaging expects are declared per package in `config.sh`:
 | Package    | Repo                     | Expected asset (per arch)                              |
 | ---------- | ------------------------ | ----------------------------------------------------- |
 | `digstore` | `DIG-Network/digstore`   | `digstore-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` |
-| `dig-node` | `DIG-Network/dig-node`   | `dig-companion-<ver>-linux-{x64,arm64}` (bare binary)  |
+| `dig-node` | `DIG-Network/dig-node`   | `dig-node-<ver>-linux-{x64,arm64}` (bare binary)       |
 
-**As of 2026-06, neither expected asset exists yet:**
+**Asset availability:**
 
 - `DIG-Network/digstore` releases ship only the `DigStore-Setup-*.AppImage` / `.dmg`
   / `.exe` **installers** — there is no raw `digstore` Linux CLI binary as a release
   asset. (`publish-binary.yml` builds a static-musl `digstore` but uploads it to S3,
   not the release.)
-- `DIG-Network/dig-node` has **no releases** yet. Its `release.yml` (inherited from
-  dig-companion) is wired to publish `dig-companion-<ver>-linux-{x64,arm64}` binaries
-  on a tag — which is what `config.sh` targets.
+- `DIG-Network/dig-node`'s `release.yml` publishes raw `dig-node-<ver>-linux-{x64,arm64}`
+  binaries on a tag — which is what `config.sh` targets. (No `linux-arm64` asset is
+  published yet, so arm64 is skipped non-fatally; see the note below.)
 
-So today the build resolves the templates, finds nothing, **skips** the package
+The build resolves each template; if the asset is absent it **skips** that package
 (non-fatal), and the apt repo is published with whatever debs DID build. The pipeline
 stays green. When upstream attaches matching assets, packaging picks them up with **no
 code change**. To point at a different source without editing `config.sh`, set per-run

@@ -102,16 +102,15 @@ PKG_dig_node_DESC_LONG=" dig-node is the DIG Network node: it serves and caches 
  Installed as a systemd service (dig-node.service) running as the dig-node
  system account, bound to localhost."
 PKG_dig_node_SERVICE="yes"
-# The dig-node repo's release.yml (inherited from dig-companion) publishes raw
-# per-OS binaries named `dig-companion-<ver>-linux-{x64,arm64}` — NOT a tarball and
-# NOT the `dig-node` name. The Debian binary is installed as /usr/bin/dig-node, but
-# the DOWNLOADED upstream asset is the dig-companion binary, so:
-#   - the asset template uses the dig-companion / linux-x64 naming,
+# The dig-node repo's release.yml publishes raw per-OS binaries named
+# `dig-node-<ver>-linux-{x64,arm64}` — NOT a tarball. The Debian binary is installed
+# as /usr/bin/dig-node from that DOWNLOADED bare binary, so:
+#   - the asset template uses the dig-node / linux-x64 naming,
 #   - ARCHIVE_BIN_PATH "" means the asset IS the bare binary (no archive to unpack),
 #   - asset-arch overrides map amd64->x64, arm64->arm64.
 # build-deb.sh installs that bare binary as /usr/bin/${PKG_dig_node_BIN}. When the
 # repo later switches to a `dig-node-…tar.gz` scheme, only these three lines change.
-PKG_dig_node_ASSET_TEMPLATE="dig-companion-{ver}-linux-{arch}"
+PKG_dig_node_ASSET_TEMPLATE="dig-node-{ver}-linux-{arch}"
 PKG_dig_node_ASSET_ARCH_amd64="x64"
 PKG_dig_node_ASSET_ARCH_arm64="arm64"
 PKG_dig_node_ARCHIVE_BIN_PATH=""

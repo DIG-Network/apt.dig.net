@@ -38,10 +38,10 @@ check "asset_name digstore arm64" \
   "$(asset_name "$(pkg_var digstore ASSET_TEMPLATE)" v0.6.0 "$(apt_asset_arch arm64)")"
 # dig-node overrides the arch token (linux-x64), exercised via asset_arch_for.
 check "asset_name dig-node amd64" \
-  "dig-companion-0.5.29-linux-x64" \
+  "dig-node-0.5.29-linux-x64" \
   "$(asset_name "$(pkg_var dig-node ASSET_TEMPLATE)" v0.5.29 "$(asset_arch_for dig-node amd64)")"
 check "asset_name dig-node arm64" \
-  "dig-companion-0.5.29-linux-arm64" \
+  "dig-node-0.5.29-linux-arm64" \
   "$(asset_name "$(pkg_var dig-node ASSET_TEMPLATE)" v0.5.29 "$(asset_arch_for dig-node arm64)")"
 
 # apt_asset_arch: the default Debian-arch -> upstream-token map.
