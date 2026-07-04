@@ -1,0 +1,6 @@
+{
+  "name": "apt.dig.net",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DIG Network APT repository — deploy metadata + tooling. Version drives the tag-on-merge release pipeline (CLAUDE.md §3.6)."
+}
