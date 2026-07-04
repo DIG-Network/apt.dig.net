@@ -14,7 +14,7 @@ name: deploy
 # So a push pre-provisioning builds + verifies and then no-ops cleanly (green).
 on:
   push:
-    branches: [main]
+    tags: ['v*']
   workflow_dispatch: {}
 
 # Serialize: never let two runs race on `s3 sync --delete` (a delete-sweep could drop
