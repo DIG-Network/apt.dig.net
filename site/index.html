@@ -27,6 +27,10 @@
       content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node and digstore. Signed APT repository."
     />
     <meta name="twitter:image" content="https://apt.dig.net/og-image.svg" />
+    <!-- Build-version exposure (CLAUDE.md §6.7): %%APP_VERSION%% is a build-time
+         token replaced by packaging/inject-site-version.sh from package.json (never
+         hand-maintained here). Read by the bug-report widget's auto-detect. -->
+    <meta name="app-version" content="%%APP_VERSION%%" />
     <!-- Machine-readable entry point for agents (CLAUDE.md: agent-friendly by default). -->
     <link rel="alternate" type="text/plain" href="https://apt.dig.net/llms.txt" />
     <link rel="alternate" type="application/atom+xml" href="https://apt.dig.net/feed.xml" title="DIG Network APT repository — published packages" />
@@ -146,6 +150,7 @@
         color: var(--fg2);
       }
       footer a { color: var(--fg2); }
+      .version-tag { margin-top: 0.6rem; font-size: 0.78rem; }
 
       /* ---------- skip link + focus visibility (WCAG 2.2 AA: 2.4.1, 2.4.11) ---------- */
       .skip-link {
@@ -234,6 +239,11 @@ systemctl status dig-node</code></pre>
         <a href="https://discord.gg/dignetwork">Discord</a> ·
         <a href="https://github.com/DIG-Network">GitHub</a>
       </nav>
+      <p class="version-tag" data-testid="footer-app-version">v%%APP_VERSION%%</p>
     </footer>
+    <script src="/version.js"></script>
+    <!-- Shared DIG Network bug-report widget (CLAUDE.md §6.7) — files reports into
+         DIG-Network/apt.dig.net via the allowlisted repo name. -->
+    <script src="https://bugreport.dig.net/widget.js" data-repo="apt.dig.net" data-position="bottom-right" async></script>
   </body>
 </html>
