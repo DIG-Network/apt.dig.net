@@ -29,6 +29,7 @@ jobs:
             packaging/config.sh \
             packaging/build-deb.sh \
             packaging/repo/generate-repo.sh \
+            packaging/inject-site-version.sh \
             tests/*.sh
 
       - name: actionlint
