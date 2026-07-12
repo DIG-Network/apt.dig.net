@@ -86,6 +86,14 @@ PKG_digstore_ASSET_TEMPLATE="digstore-{ver}-{arch}-unknown-linux-gnu.tar.gz"
 # Path of the binary inside the downloaded archive (relative to the archive root).
 # Empty ("") means the asset IS the bare binary (no archive to unpack).
 PKG_digstore_ARCHIVE_BIN_PATH="digstore"
+# Extra binaries shipped from the SAME archive, alongside the main one, and installed
+# under /usr/bin next to it (space-separated names; see extra_bin_path() in
+# common.sh). `digs` is a first-class alias binary for `digstore` (`digs <args>` ==
+# `digstore <args>` — digstore#16 / dig_ecosystem#434): the release tarball carries
+# both executables at its root. Until upstream ships a tarball with `digs` inside,
+# build-deb.sh resolves + skips it non-fatally (same resilience contract as a
+# missing arch/asset above) so the pipeline stays green either way.
+PKG_digstore_EXTRA_BINS="digs"
 
 # ---- dig-node (the node service; installs + enables a systemd unit) ----------------
 

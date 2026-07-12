@@ -38,6 +38,13 @@ contains "dig-node control Depends adduser"  "$nctrl" "adduser"
 case "$nctrl" in *"Installed-Size"*) printf 'FAIL - dig-node omits Installed-Size when unset\n'; fails=$((fails+1));;
   *) printf 'ok   - dig-node omits Installed-Size when unset\n';; esac
 
+# --- extra_bin_path: the digs alias lives beside the main bin in the archive ---
+check "extra_bin_path at archive root"     "digs"     "$(extra_bin_path digstore digs)"
+check "extra_bin_path under a subdir"      "bin/digs" "$(extra_bin_path bin/digstore digs)"
+
+# --- config: digstore declares digs as an extra binary to ship alongside it ---
+check "digstore EXTRA_BINS declares digs" "digs" "$(pkg_var digstore EXTRA_BINS)"
+
 # --- a real dpkg-deb build round-trip (skipped if tooling absent) ---
 if command -v dpkg-deb >/dev/null 2>&1; then
   work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
@@ -71,6 +78,17 @@ if command -v dpkg-deb >/dev/null 2>&1; then
   contains "unit sets the cache dir"      "$unit" "/var/lib/dig-node"
   contains "unit is loopback-scoped"      "$unit" "127.0.0.1"
   contains "unit WantedBy multi-user"     "$unit" "WantedBy=multi-user.target"
+
+  # --- digstore ships the `digs` alias binary alongside `digstore` (issue #434 /
+  # digstore#16: `digs` is a first-class alias binary, `digs <args>` == `digstore
+  # <args>`). stage_deb takes extra NAME:SRC pairs beyond the main binary. ---
+  fakedigstore="$work/digstore"; printf '#!/bin/sh\necho digstore fake\n' > "$fakedigstore"
+  fakedigs="$work/digs"; printf '#!/bin/sh\necho digs fake\n' > "$fakedigs"
+  digstore_deb="$(stage_deb digstore v0.12.0 amd64 "$fakedigstore" "$work/stage-digstore" "$out" "digs:$fakedigs")"
+  check "digstore stage_deb produced a .deb" "1" "$([ -f "$digstore_deb" ] && echo 1 || echo 0)"
+  digstore_files="$(dpkg-deb -c "$digstore_deb")"
+  contains "digstore deb ships /usr/bin/digstore" "$digstore_files" "./usr/bin/digstore"
+  contains "digstore deb ships /usr/bin/digs (alias binary)" "$digstore_files" "./usr/bin/digs"
 else
   printf 'skip - dpkg-deb not present; control rendering still asserted\n'
 fi
