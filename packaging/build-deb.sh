@@ -26,12 +26,16 @@ _BD_HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=config.sh
 . "$_BD_HERE/config.sh"
 
-# stage_deb PKG VERSION DEBARCH BIN_SRC STAGE_DIR OUT_DIR
+# stage_deb PKG VERSION DEBARCH BIN_SRC STAGE_DIR OUT_DIR [NAME:SRC ...]
 #   Lay out a single .deb under STAGE_DIR and build it into OUT_DIR. Pure filesystem
 #   layout + dpkg-deb; no network. Returns the path of the built .deb on stdout.
 #   This is the unit the deb-layout test pins.
+#
+#   Trailing NAME:SRC args install additional binaries alongside BIN_SRC at
+#   /usr/bin/NAME — e.g. digstore's `digs` alias binary (PKG_*_EXTRA_BINS).
 stage_deb() {
   local pkg="$1" version="$2" arch="$3" bin_src="$4" stage="$5" out="$6"
+  shift 6
   local bin_name service root
   bin_name="$(pkg_var "$pkg" BIN)"
   service="$(pkg_var "$pkg" SERVICE)"
@@ -41,9 +45,18 @@ stage_deb() {
   install -d -m 0755 "$root/DEBIAN" "$root/usr/bin"
   install -m 0755 "$bin_src" "$root/usr/bin/$bin_name"
 
-  # Installed-Size in KiB (du -k rounds up to disk blocks; close enough for apt's UI).
+  # Extra binaries (NAME:SRC pairs) shipped alongside the main one.
+  local pair extra_name extra_src
+  for pair in "$@"; do
+    extra_name="${pair%%:*}"
+    extra_src="${pair#*:}"
+    install -m 0755 "$extra_src" "$root/usr/bin/$extra_name"
+  done
+
+  # Installed-Size in KiB (du -k rounds up to disk blocks; close enough for apt's
+  # UI), summed over every binary this package ships (usr/bin as a whole).
   local size_kb
-  size_kb="$(du -k -s "$root/usr/bin/$bin_name" | awk '{print $1}')"
+  size_kb="$(du -k -s "$root/usr/bin" | awk '{print $1}')"
 
   # Service package: ship + register the systemd unit and maintainer scripts.
   if [ "$service" = "yes" ]; then
@@ -102,36 +115,43 @@ fetch_asset() {
 
 # extract_binary ASSET_PATH ARCHIVE_BIN_PATH DEST -> place the binary at DEST.
 # Handles: bare binary (ARCHIVE_BIN_PATH empty), .tar.gz/.tgz, and .zip.
+# Returns 1 (DEST not created) when ARCHIVE_BIN_PATH does not exist inside the
+# archive, WITHOUT erroring — callers that treat a given path as optional (e.g. an
+# EXTRA_BINS entry an older upstream release predates) can check the exit status
+# instead of the script dying under `set -e`; a caller that treats the path as
+# required simply doesn't guard the call, so a real miss still aborts the build.
 extract_binary() {
-  local asset="$1" inner="$2" dest="$3" tmp
+  local asset="$1" inner="$2" dest="$3" tmp rc=0
   case "$asset" in
     *.tar.gz | *.tgz)
       tmp="$(mktemp -d)"
       tar -xzf "$asset" -C "$tmp"
-      cp "$tmp/$inner" "$dest"
+      if [ -f "$tmp/$inner" ]; then cp "$tmp/$inner" "$dest"; else rc=1; fi
       rm -rf "$tmp"
       ;;
     *.zip)
       tmp="$(mktemp -d)"
       (cd "$tmp" && unzip -q "$asset")
-      cp "$tmp/$inner" "$dest"
+      if [ -f "$tmp/$inner" ]; then cp "$tmp/$inner" "$dest"; else rc=1; fi
       rm -rf "$tmp"
       ;;
     *)
       # Bare binary asset.
-      cp "$asset" "$dest"
+      cp "$asset" "$dest" || rc=1
       ;;
   esac
-  chmod 0755 "$dest"
+  [ "$rc" -eq 0 ] && chmod 0755 "$dest"
+  return "$rc"
 }
 
 # build_one PKG POOL_DIR -> resolve + download + stage every available arch.
 build_one() {
   local pkg="$1" pool="$2"
-  local repo tag tmpl inner override_tag override_tmpl
+  local repo tag tmpl inner extra_bins override_tag override_tmpl
   repo="$(pkg_var "$pkg" REPO)"
   tmpl="$(pkg_var "$pkg" ASSET_TEMPLATE)"
   inner="$(pkg_var "$pkg" ARCHIVE_BIN_PATH)"
+  extra_bins="$(pkg_var "$pkg" EXTRA_BINS)"
 
   # Per-package env overrides (UPPERCASED, '-'->'_'): <PKG>_TAG / <PKG>_ASSET_TEMPLATE.
   local envpkg
@@ -163,7 +183,21 @@ build_one() {
     fi
     bin="$work/bin-$arch"
     extract_binary "$dl" "$inner" "$bin"
-    built="$(stage_deb "$pkg" "$tag" "$arch" "$bin" "$work/stage-$arch" "$pool")"
+
+    # Extra binaries from the same archive (e.g. digstore's `digs` alias). Optional:
+    # an upstream release that predates the extra bin simply ships without it.
+    local extra_args=() eb eb_inner eb_dest
+    for eb in $extra_bins; do
+      eb_inner="$(extra_bin_path "$inner" "$eb")"
+      eb_dest="$work/bin-$arch-$eb"
+      if extract_binary "$dl" "$eb_inner" "$eb_dest"; then
+        extra_args+=("$eb:$eb_dest")
+      else
+        warn "$pkg: extra binary '$eb' not found in $name (upstream release predates it) — shipping without it."
+      fi
+    done
+
+    built="$(stage_deb "$pkg" "$tag" "$arch" "$bin" "$work/stage-$arch" "$pool" "${extra_args[@]}")"
     log "$pkg: built $(basename "$built")"
     any=1
   done

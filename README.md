@@ -30,7 +30,11 @@ systemctl status dig-node
 | Package    | Installs                                   | Service |
 | ---------- | ------------------------------------------ | ------- |
 | `dig-node` | `/usr/bin/dig-node` + `dig-node.service`   | yes — `systemctl enable --now dig-node` (loopback `127.0.0.1:8080`, runs as the `dig-node` system account, cache at `/var/lib/dig-node`) |
-| `digstore` | `/usr/bin/digstore`                        | no — just the CLI on `PATH` |
+| `digstore` | `/usr/bin/digstore` + `/usr/bin/digs`      | no — just the CLI on `PATH` |
+
+`digs` is a first-class alias binary for `digstore` — `digs <args>` behaves identically
+to `digstore <args>`. It ships in the same upstream release tarball as `digstore` and
+is installed alongside it (see `PKG_digstore_EXTRA_BINS` in `config.sh`).
 
 Configure the node with `systemctl edit dig-node` (env: `DIG_NODE_HOST`,
 `DIG_NODE_PORT`, `DIG_RPC_UPSTREAM`). `DIG_NODE_HOST` / `DIG_NODE_PORT` are the
@@ -92,15 +96,20 @@ time. The asset names packaging expects are declared per package in `config.sh`:
 
 | Package    | Repo                     | Expected asset (per arch)                              |
 | ---------- | ------------------------ | ----------------------------------------------------- |
-| `digstore` | `DIG-Network/digstore`   | `digstore-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` |
+| `digstore` | `DIG-Network/digstore`   | `digstore-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` (contains `digstore` + `digs`) |
 | `dig-node` | `DIG-Network/dig-node`   | `dig-node-<ver>-linux-{x64,arm64}` (bare binary)       |
 
 **Asset availability:**
 
-- `DIG-Network/digstore` releases ship only the `DigStore-Setup-*.AppImage` / `.dmg`
-  / `.exe` **installers** — there is no raw `digstore` Linux CLI binary as a release
-  asset. (`publish-binary.yml` builds a static-musl `digstore` but uploads it to S3,
-  not the release.)
+- `DIG-Network/digstore`'s `publish-binary.yml` publishes a raw per-arch
+  `digstore-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` release asset (alongside
+  the `DigStore-Setup-*.AppImage`/`.dmg`/`.exe` installers) — which is what
+  `config.sh` targets. Until `DIG-Network/digstore#16` lands, that tarball contains
+  only `digstore`; `digs` (a first-class alias binary, `digs <args>` == `digstore
+  <args>`) is resolved as an **optional extra** (`PKG_digstore_EXTRA_BINS`) and
+  skipped non-fatally on any release that predates it, so the pipeline stays green
+  either way — once the tarball carries `digs`, packaging picks it up with **no
+  code change**.
 - `DIG-Network/dig-node`'s `release.yml` publishes raw `dig-node-<ver>-linux-{x64,arm64}`
   binaries on a tag — which is what `config.sh` targets. (No `linux-arm64` asset is
   published yet, so arm64 is skipped non-fatally; see the note below.)

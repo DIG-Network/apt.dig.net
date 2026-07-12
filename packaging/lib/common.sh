@@ -49,6 +49,21 @@ asset_name() {
   printf '%s' "$tmpl"
 }
 
+# extra_bin_path ARCHIVE_BIN_PATH NAME -> the archive-relative path of an "extra"
+# binary (e.g. digstore's `digs` alias, PKG_*_EXTRA_BINS) that ships in the SAME
+# release archive, alongside the main binary at ARCHIVE_BIN_PATH — same directory,
+# different filename. Root-level main bin ("digstore") -> root-level extra ("digs");
+# a nested main bin ("bin/digstore") -> the same nested dir ("bin/digs").
+extra_bin_path() {
+  local inner="$1" name="$2" dir
+  dir="$(dirname -- "$inner")"
+  if [ "$dir" = "." ]; then
+    printf '%s' "$name"
+  else
+    printf '%s/%s' "$dir" "$name"
+  fi
+}
+
 # render_control PKG VERSION DEBARCH INSTALLED_SIZE_KB -> a DEBIAN/control file on stdout.
 # Pure string rendering from config.sh + the args; no filesystem reads. This is the
 # contract the deb-layout test pins.
