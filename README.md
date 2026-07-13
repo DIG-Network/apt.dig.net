@@ -29,7 +29,7 @@ systemctl status dig-node
 
 | Package    | Installs                                   | Service |
 | ---------- | ------------------------------------------ | ------- |
-| `dig-node` | `/usr/bin/dig-node` + `dig-node.service`   | yes — `systemctl enable --now dig-node` (loopback `127.0.0.1:8080`, runs as the `dig-node` system account, cache at `/var/lib/dig-node`) |
+| `dig-node` | `/usr/bin/dig-node` + `dig-node.service`   | yes — `systemctl enable --now dig-node` (loopback `127.0.0.1:9778`, runs as the `dig-node` system account, cache at `/var/lib/dig-node`) |
 | `digstore` | `/usr/bin/digstore` + `/usr/bin/digs`      | no — just the CLI on `PATH` |
 
 `digs` is a first-class alias binary for `digstore` — `digs <args>` behaves identically
