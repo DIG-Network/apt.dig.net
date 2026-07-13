@@ -5,7 +5,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 rc=0
-for t in test_version_resolution.sh test_deb_layout.sh test_repo_metadata.sh test_site_baseline.sh test_version_injection.sh; do
+for t in test_version_resolution.sh test_dig_node_port.sh test_deb_layout.sh test_repo_metadata.sh test_site_baseline.sh test_version_injection.sh; do
   printf '\n========== %s ==========\n' "$t"
   if bash "$HERE/$t"; then :; else rc=1; fi
 done
