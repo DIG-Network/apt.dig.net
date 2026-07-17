@@ -4,14 +4,10 @@ All notable changes to this project are documented here.
 This project adheres to [Semantic Versioning](https://semver.org) and
 [Conventional Commits](https://www.conventionalcommits.org).
 
-## [0.4.0] - 2026-07-16
+## [0.4.0] - 2026-07-17
 
 ### Features
-- **packaging:** Cut over the store CLI package to the renamed `dig-store` binary +
-  asset name (repo `DIG-Network/digstore` → `DIG-Network/dig-store`, binary `digstore`
-  → `dig-store`). The `.deb` is now `dig-store` (`/usr/bin/dig-store`), keeps the `digs`
-  alias, and ships a transitional `/usr/bin/digstore` → `dig-store` compat symlink so
-  existing scripts keep working during the rename (#704, epic #703).
+- **packaging:** Cut over store CLI to the dig-store binary + asset name (#5)
 
 ## [0.3.2] - 2026-07-13
 
