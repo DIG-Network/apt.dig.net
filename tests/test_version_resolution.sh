@@ -30,12 +30,12 @@ check "deb_version multi -> ~"          "1.0.0~beta~2" "$(deb_version 1.0.0-beta
 
 # asset_name: template substitution drives which release asset to download.
 # (Accessed via pkg_var — the intended accessor — not the raw PKG_* var.)
-check "asset_name digstore amd64" \
-  "digstore-0.6.0-x86_64-unknown-linux-gnu.tar.gz" \
-  "$(asset_name "$(pkg_var digstore ASSET_TEMPLATE)" v0.6.0 "$(apt_asset_arch amd64)")"
-check "asset_name digstore arm64" \
-  "digstore-0.6.0-aarch64-unknown-linux-gnu.tar.gz" \
-  "$(asset_name "$(pkg_var digstore ASSET_TEMPLATE)" v0.6.0 "$(apt_asset_arch arm64)")"
+check "asset_name dig-store amd64" \
+  "dig-store-0.14.0-x86_64-unknown-linux-gnu.tar.gz" \
+  "$(asset_name "$(pkg_var dig-store ASSET_TEMPLATE)" v0.14.0 "$(apt_asset_arch amd64)")"
+check "asset_name dig-store arm64" \
+  "dig-store-0.14.0-aarch64-unknown-linux-gnu.tar.gz" \
+  "$(asset_name "$(pkg_var dig-store ASSET_TEMPLATE)" v0.14.0 "$(apt_asset_arch arm64)")"
 # dig-node overrides the arch token (linux-x64), exercised via asset_arch_for.
 check "asset_name dig-node amd64" \
   "dig-node-0.5.29-linux-x64" \
@@ -49,12 +49,13 @@ check "apt_asset_arch amd64"  "x86_64"  "$(apt_asset_arch amd64)"
 check "apt_asset_arch arm64"  "aarch64" "$(apt_asset_arch arm64)"
 # asset_arch_for honours per-package overrides + falls back to the default map.
 check "asset_arch_for dig-node amd64 override" "x64"    "$(asset_arch_for dig-node amd64)"
-check "asset_arch_for digstore amd64 default"  "x86_64" "$(asset_arch_for digstore amd64)"
+check "asset_arch_for dig-store amd64 default"  "x86_64" "$(asset_arch_for dig-store amd64)"
 
 # pkg_var: the dig-node -> dig_node key-segment mapping must resolve.
 check "pkg_var dig-node BIN"    "dig-node" "$(pkg_var dig-node BIN)"
 check "pkg_var dig-node SERVICE" "yes"     "$(pkg_var dig-node SERVICE)"
-check "pkg_var digstore SERVICE" "no"      "$(pkg_var digstore SERVICE)"
+check "pkg_var dig-store SERVICE" "no"     "$(pkg_var dig-store SERVICE)"
+check "pkg_var dig-store BIN"     "dig-store" "$(pkg_var dig-store BIN)"
 
 if [ "$fails" -ne 0 ]; then
   printf '\n%d assertion(s) failed\n' "$fails" >&2

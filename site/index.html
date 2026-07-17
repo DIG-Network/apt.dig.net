@@ -6,14 +6,14 @@
     <title>apt.dig.net — DIG Network APT repository</title>
     <meta
       name="description"
-      content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node (the node service) and digstore (the CLI). Signed APT repository."
+      content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node (the node service) and dig-store (the CLI). Signed APT repository."
     />
     <meta name="theme-color" content="#5800d6" />
     <link rel="canonical" href="https://apt.dig.net/" />
     <meta property="og:title" content="DIG Network APT repository" />
     <meta
       property="og:description"
-      content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node (the node service) and digstore (the CLI). Signed APT repository."
+      content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node (the node service) and dig-store (the CLI). Signed APT repository."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://apt.dig.net/" />
@@ -24,7 +24,7 @@
     <meta name="twitter:title" content="DIG Network APT repository" />
     <meta
       name="twitter:description"
-      content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node and digstore. Signed APT repository."
+      content="Install the DIG Network ecosystem on Ubuntu/Debian with apt: dig-node and dig-store. Signed APT repository."
     />
     <meta name="twitter:image" content="https://apt.dig.net/og-image.svg" />
     <!-- Build-version exposure (CLAUDE.md §6.7): %%APP_VERSION%% is a build-time
@@ -40,7 +40,7 @@
       "@type": "SoftwareApplication",
       "name": "DIG Network APT repository",
       "url": "https://apt.dig.net/",
-      "description": "Signed APT repository for the DIG Network ecosystem on Ubuntu/Debian: dig-node (the node service) and digstore (the content-addressable store CLI).",
+      "description": "Signed APT repository for the DIG Network ecosystem on Ubuntu/Debian: dig-node (the node service) and dig-store (the content-addressable store CLI).",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Debian, Ubuntu",
       "isAccessibleForFree": true,
@@ -190,7 +190,7 @@
       <p>
         Install the DIG ecosystem on Ubuntu/Debian with <code>apt</code>:
         <strong>dig-node</strong> (the node service, run via systemd) and
-        <strong>digstore</strong> (the content-addressable store CLI).
+        <strong>dig-store</strong> (the content-addressable store CLI).
       </p>
     </header>
     <main id="main-content" tabindex="-1">
@@ -204,7 +204,7 @@ echo "deb [signed-by=/usr/share/keyrings/dig.gpg] https://apt.dig.net stable mai
 
 # 3. Install
 sudo apt update
-sudo apt install dig-node digstore
+sudo apt install dig-node dig-store
 
 # 4. The node runs as a systemd service
 systemctl status dig-node</code></pre>
@@ -217,8 +217,8 @@ systemctl status dig-node</code></pre>
           <code>dig-node.service</code> (loopback-bound on
           <code>127.0.0.1:9778</code>). It serves the verified
           <code>chia://</code> content a DIG browser or extension opens.</li>
-        <li><code>digstore</code> — the <code>digstore</code> CLI on your
-          <code>PATH</code>.</li>
+        <li><code>dig-store</code> — the <code>dig-store</code> CLI on your
+          <code>PATH</code> (with a transitional <code>digstore</code> alias).</li>
       </ul>
 
       <h2>Machine-readable</h2>

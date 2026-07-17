@@ -32,7 +32,9 @@ _BD_HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #   This is the unit the deb-layout test pins.
 #
 #   Trailing NAME:SRC args install additional binaries alongside BIN_SRC at
-#   /usr/bin/NAME — e.g. digstore's `digs` alias binary (PKG_*_EXTRA_BINS).
+#   /usr/bin/NAME — e.g. dig-store's `digs` alias binary (PKG_*_EXTRA_BINS).
+#   Compat symlinks (PKG_*_COMPAT_SYMLINKS) are rendered under /usr/bin pointing at
+#   the main binary — e.g. the transitional `digstore` -> `dig-store` link.
 stage_deb() {
   local pkg="$1" version="$2" arch="$3" bin_src="$4" stage="$5" out="$6"
   shift 6
@@ -51,6 +53,14 @@ stage_deb() {
     extra_name="${pair%%:*}"
     extra_src="${pair#*:}"
     install -m 0755 "$extra_src" "$root/usr/bin/$extra_name"
+  done
+
+  # Transitional compat symlinks -> the main binary (relative link, same directory),
+  # e.g. `digstore` -> `dig-store` during the repo/binary rename (#703/#704).
+  local compat link
+  compat="$(pkg_var "$pkg" COMPAT_SYMLINKS)"
+  for link in $compat; do
+    ln -sf "$bin_name" "$root/usr/bin/$link"
   done
 
   # Installed-Size in KiB (du -k rounds up to disk blocks; close enough for apt's
@@ -96,7 +106,7 @@ gh_latest_tag() {
 }
 
 # fetch_asset REPO TAG ASSET_NAME DEST -> 0 if downloaded, 1 if the asset is absent.
-# Honours a direct DIGSTORE_ASSET_URL / DIG_NODE_ASSET_URL override (see config notes).
+# Honours a direct DIG_STORE_ASSET_URL / DIG_NODE_ASSET_URL override (see config notes).
 fetch_asset() {
   local repo="$1" tag="$2" name="$3" dest="$4"
   if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
@@ -184,7 +194,7 @@ build_one() {
     bin="$work/bin-$arch"
     extract_binary "$dl" "$inner" "$bin"
 
-    # Extra binaries from the same archive (e.g. digstore's `digs` alias). Optional:
+    # Extra binaries from the same archive (e.g. dig-store's `digs` alias). Optional:
     # an upstream release that predates the extra bin simply ships without it.
     local extra_args=() eb eb_inner eb_dest
     for eb in $extra_bins; do

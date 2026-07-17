@@ -17,11 +17,11 @@
 #   - Debian control metadata (section, depends, description),
 #   - whether the package installs a systemd service.
 #
-# Asset reality (2026-06): the digstore/dig-node GitHub releases do not yet publish a
-# raw per-arch CLI binary tarball under these names. The patterns below are the names
-# the packaging EXPECTS; build-deb.sh resolves them at build time and SKIPS (non-fatal)
-# any arch whose asset is absent, so the pipeline stays green until upstream publishes
-# matching assets. See README "Upstream asset contract".
+# Asset reality: the dig-store repo (DIG-Network/dig-store — renamed from `digstore`,
+# #703/#704) and dig-node publish per-arch release assets under the names below.
+# build-deb.sh resolves them at build time and SKIPS (non-fatal) any arch whose asset
+# is absent, so the pipeline stays green until upstream publishes matching assets. See
+# README "Upstream asset contract".
 
 # Debian architectures we attempt to build, in order. arm64 is best-effort: skipped
 # when no matching upstream asset exists.
@@ -48,7 +48,7 @@ apt_asset_arch() {
 
 # asset_arch_for PKG DEBARCH -> the upstream arch token for this package+arch,
 # honouring a per-package override (PKG_<pkg>_ASSET_ARCH_<debarch>) and falling back
-# to the default token map. Keeps the dig-node `linux-x64` naming out of the digstore
+# to the default token map. Keeps the dig-node `linux-x64` naming out of the dig-store
 # path without special-casing in the builder.
 asset_arch_for() {
   local override
@@ -56,44 +56,51 @@ asset_arch_for() {
   if [ -n "$override" ]; then printf '%s' "$override"; else apt_asset_arch "$2"; fi
 }
 
-# ---- digstore (CLI; drops the binary on PATH, no service) -------------------------
+# ---- dig-store (CLI; drops the binary on PATH, no service) ------------------------
+#
+# The var-key segment is `dig_store` (dig-store with '-'->'_', per pkg_var()): the
+# package id in $APT_PACKAGES is `dig-store`, so its Debian package name AND the
+# installed binary are both `dig-store`. The repo was renamed digstore -> dig-store
+# (DIG-Network/dig-store, epic #703): the CLI binary is `dig-store`, `digs` stays a
+# first-class alias, and a transitional `digstore` -> `dig-store` symlink ships in the
+# .deb so existing `digstore …` scripts keep working during the rename.
 
-PKG_digstore_REPO="DIG-Network/digstore"
-PKG_digstore_BIN="digstore"
-PKG_digstore_SECTION="utils"
-PKG_digstore_DEPENDS="libc6"
-PKG_digstore_HOMEPAGE="https://dig.net"
-PKG_digstore_MAINTAINER="DIG Network <packages@dig.net>"
-PKG_digstore_DESC_SHORT="DIG Network content-addressable store CLI"
-PKG_digstore_DESC_LONG=" digstore is the Git-shaped, encrypted, content-addressable store engine
+PKG_dig_store_REPO="DIG-Network/dig-store"
+PKG_dig_store_BIN="dig-store"
+PKG_dig_store_SECTION="utils"
+PKG_dig_store_DEPENDS="libc6"
+PKG_dig_store_HOMEPAGE="https://dig.net"
+PKG_dig_store_MAINTAINER="DIG Network <packages@dig.net>"
+PKG_dig_store_DESC_SHORT="DIG Network content-addressable store CLI"
+PKG_dig_store_DESC_LONG=" dig-store is the Git-shaped, encrypted, content-addressable store engine
  for the DIG Network. It initialises stores, commits capsules, and pushes them
  to the network over the dig:// remote protocol, anchoring them on Chia mainnet."
-PKG_digstore_SERVICE="no"
-# Asset name template the release is expected to publish, per arch.
+PKG_dig_store_SERVICE="no"
+# Asset name template the release publishes, per arch.
 # {ver} = version without leading 'v'; {arch} = upstream asset arch token.
 #
-# Reality (2026-06): the digstore GitHub *releases* currently ship only the
-# DigStore-Setup-*.AppImage / .dmg / .exe INSTALLERS — there is no raw `digstore`
-# Linux CLI binary or per-arch tarball as a release asset. (publish-binary.yml builds
-# a static-musl `digstore` but uploads it to S3, not the release.) So this template is
-# the EXPECTED name for a raw per-arch CLI tarball; until upstream attaches one,
-# build-deb.sh resolves it, finds nothing, and SKIPS digstore (non-fatal) — the apt
-# repo simply omits the package and the pipeline stays green. When upstream publishes
-# `digstore-<ver>-<arch>-unknown-linux-gnu.tar.gz`, packaging picks it up with no code
-# change. (Override via the DIGSTORE_ASSET_TEMPLATE / DIGSTORE_ASSET_URL env in CI to
-# point at any other source, e.g. the S3 object, without editing this file.)
-PKG_digstore_ASSET_TEMPLATE="digstore-{ver}-{arch}-unknown-linux-gnu.tar.gz"
+# The dig-store release publishes a raw per-arch CLI tarball
+# `dig-store-<ver>-<arch>-unknown-linux-gnu.tar.gz` (the rename dual-publishes a
+# transitional `digstore-<ver>-…` tarball too, but packaging targets the new name).
+# build-deb.sh resolves it, and SKIPS a missing arch/asset non-fatally so the pipeline
+# stays green. (Override via the DIG_STORE_ASSET_TEMPLATE / DIG_STORE_TAG env in CI to
+# point at any other source without editing this file.)
+PKG_dig_store_ASSET_TEMPLATE="dig-store-{ver}-{arch}-unknown-linux-gnu.tar.gz"
 # Path of the binary inside the downloaded archive (relative to the archive root).
 # Empty ("") means the asset IS the bare binary (no archive to unpack).
-PKG_digstore_ARCHIVE_BIN_PATH="digstore"
+PKG_dig_store_ARCHIVE_BIN_PATH="dig-store"
 # Extra binaries shipped from the SAME archive, alongside the main one, and installed
 # under /usr/bin next to it (space-separated names; see extra_bin_path() in
-# common.sh). `digs` is a first-class alias binary for `digstore` (`digs <args>` ==
-# `digstore <args>` — digstore#16 / dig_ecosystem#434): the release tarball carries
-# both executables at its root. Until upstream ships a tarball with `digs` inside,
-# build-deb.sh resolves + skips it non-fatally (same resilience contract as a
-# missing arch/asset above) so the pipeline stays green either way.
-PKG_digstore_EXTRA_BINS="digs"
+# common.sh). `digs` is a first-class alias binary for `dig-store` (`digs <args>` ==
+# `dig-store <args>` — digstore#16 / dig_ecosystem#434): the release tarball carries
+# both executables at its root. If a tarball predates `digs`, build-deb.sh resolves +
+# skips it non-fatally so the pipeline stays green either way.
+PKG_dig_store_EXTRA_BINS="digs"
+# Transitional compat symlinks (space-separated names) created under /usr/bin pointing
+# at BIN. The repo/binary rename digstore -> dig-store (#703/#704) keeps a `digstore`
+# symlink so existing `digstore …` scripts keep resolving. Remove once the transition
+# is complete.
+PKG_dig_store_COMPAT_SYMLINKS="digstore"
 
 # ---- dig-node (the node service; installs + enables a systemd unit) ----------------
 
@@ -129,4 +136,4 @@ PKG_dig_node_CACHE_DIR="/var/lib/dig-node"
 
 # The packages this repo produces (underscored keys; '-' is not valid in a var name,
 # so dig-node's keys use dig_node — see pkg_var()).
-APT_PACKAGES="digstore dig-node"
+APT_PACKAGES="dig-store dig-node"

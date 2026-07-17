@@ -34,7 +34,7 @@ work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 # shellcheck source=../packaging/build-deb.sh
 STAGE_ONLY=1 . "$ROOT/packaging/build-deb.sh"
 pool="$work/site/pool/$APT_COMPONENT"; mkdir -p "$pool"
-for spec in "digstore:v0.6.0:amd64" "dig-node:v0.5.29:amd64"; do
+for spec in "dig-store:v0.14.0:amd64" "dig-node:v0.5.29:amd64"; do
   IFS=: read -r pkg ver arch <<<"$spec"
   bin="$work/$pkg"; printf '#!/bin/sh\necho %s\n' "$pkg" > "$bin"
   stage_deb "$pkg" "$ver" "$arch" "$bin" "$work/stage-$pkg" "$pool"
@@ -68,7 +68,7 @@ rel="$work/site/dists/$APT_SUITE/Release"
 
 check "Packages index exists" "1" "$([ -f "$pkgs" ] && echo 1 || echo 0)"
 body="$(cat "$pkgs")"
-contains "Packages lists digstore"            "$body" "Package: digstore"
+contains "Packages lists dig-store"           "$body" "Package: dig-store"
 contains "Packages lists dig-node"            "$body" "Package: dig-node"
 contains "Packages has SHA256"                "$body" "SHA256:"
 contains "Packages Filename points into pool" "$body" "Filename: pool/$APT_COMPONENT/"
@@ -108,7 +108,7 @@ feed="$work/site/feed.xml"
 check "feed.xml exists" "1" "$([ -f "$feed" ] && echo 1 || echo 0)"
 feedbody="$(cat "$feed" 2>/dev/null || true)"
 contains "feed.xml is a well-formed Atom feed" "$feedbody" '<feed xmlns="http://www.w3.org/2005/Atom">'
-contains "feed.xml lists digstore"             "$feedbody" "<title>digstore"
+contains "feed.xml lists dig-store"            "$feedbody" "<title>dig-store"
 contains "feed.xml lists dig-node"             "$feedbody" "<title>dig-node"
 contains "feed.xml self link"                  "$feedbody" 'rel="self"'
 

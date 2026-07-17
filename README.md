@@ -2,7 +2,7 @@
 
 The DIG Network **APT repository** + its AWS infrastructure. Ubuntu/Debian users
 install the DIG ecosystem with `apt` — `dig-node` (the node service, run via systemd)
-and `digstore` (the content-addressable store CLI) — from a flat, GPG-signed apt
+and `dig-store` (the content-addressable store CLI) — from a flat, GPG-signed apt
 repository served at **https://apt.dig.net**.
 
 ---
@@ -19,7 +19,7 @@ echo "deb [signed-by=/usr/share/keyrings/dig.gpg] https://apt.dig.net stable mai
 
 # 3. Install
 sudo apt update
-sudo apt install dig-node digstore
+sudo apt install dig-node dig-store
 
 # 4. The node runs as a systemd service
 systemctl status dig-node
@@ -30,11 +30,16 @@ systemctl status dig-node
 | Package    | Installs                                   | Service |
 | ---------- | ------------------------------------------ | ------- |
 | `dig-node` | `/usr/bin/dig-node` + `dig-node.service`   | yes — `systemctl enable --now dig-node` (loopback `127.0.0.1:9778`, runs as the `dig-node` system account, cache at `/var/lib/dig-node`) |
-| `digstore` | `/usr/bin/digstore` + `/usr/bin/digs`      | no — just the CLI on `PATH` |
+| `dig-store` | `/usr/bin/dig-store` + `/usr/bin/digs` (+ `/usr/bin/digstore` compat symlink) | no — just the CLI on `PATH` |
 
-`digs` is a first-class alias binary for `digstore` — `digs <args>` behaves identically
-to `digstore <args>`. It ships in the same upstream release tarball as `digstore` and
-is installed alongside it (see `PKG_digstore_EXTRA_BINS` in `config.sh`).
+`digs` is a first-class alias binary for `dig-store` — `digs <args>` behaves identically
+to `dig-store <args>`. It ships in the same upstream release tarball as `dig-store` and
+is installed alongside it (see `PKG_dig_store_EXTRA_BINS` in `config.sh`).
+
+The store CLI's repo/binary was renamed `digstore` → `dig-store` (#703). A transitional
+`/usr/bin/digstore` → `dig-store` symlink ships in the `.deb`
+(`PKG_dig_store_COMPAT_SYMLINKS`) so existing `digstore …` scripts keep working during
+the rename.
 
 Configure the node with `systemctl edit dig-node` (env: `DIG_NODE_HOST`,
 `DIG_NODE_PORT`, `DIG_RPC_UPSTREAM`). `DIG_NODE_HOST` / `DIG_NODE_PORT` are the
@@ -59,7 +64,7 @@ See the docs: <https://docs.dig.net/docs/run-a-node>.
 ```
 upstream GitHub releases                this repo (CI)                     AWS
 ─────────────────────────               ──────────────                    ───
-DIG-Network/digstore   ─┐   packaging/build-deb.sh   ─┐
+DIG-Network/dig-store  ─┐   packaging/build-deb.sh   ─┐
 DIG-Network/dig-node   ─┘   (download asset → lay     │   make repo →  S3 apt-dig-net
                             out deb → dpkg-deb)        ├─ pool/main/*.deb   └─ CloudFront
                             packaging/repo/            │   dists/stable/...    └─ apt.dig.net
@@ -96,20 +101,20 @@ time. The asset names packaging expects are declared per package in `config.sh`:
 
 | Package    | Repo                     | Expected asset (per arch)                              |
 | ---------- | ------------------------ | ----------------------------------------------------- |
-| `digstore` | `DIG-Network/digstore`   | `digstore-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` (contains `digstore` + `digs`) |
+| `dig-store` | `DIG-Network/dig-store` | `dig-store-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` (contains `dig-store` + `digs` + a `digstore` compat entry) |
 | `dig-node` | `DIG-Network/dig-node`   | `dig-node-<ver>-linux-{x64,arm64}` (bare binary)       |
 
 **Asset availability:**
 
-- `DIG-Network/digstore`'s `publish-binary.yml` publishes a raw per-arch
-  `digstore-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` release asset (alongside
-  the `DigStore-Setup-*.AppImage`/`.dmg`/`.exe` installers) — which is what
-  `config.sh` targets. Until `DIG-Network/digstore#16` lands, that tarball contains
-  only `digstore`; `digs` (a first-class alias binary, `digs <args>` == `digstore
-  <args>`) is resolved as an **optional extra** (`PKG_digstore_EXTRA_BINS`) and
-  skipped non-fatally on any release that predates it, so the pipeline stays green
-  either way — once the tarball carries `digs`, packaging picks it up with **no
-  code change**.
+- `DIG-Network/dig-store`'s release publishes a raw per-arch
+  `dig-store-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` release asset — which is
+  what `config.sh` targets. The repo/binary was renamed `digstore` → `dig-store`
+  (#703), so the release dual-publishes a transitional `digstore-<ver>-…` tarball too;
+  packaging prefers the new `dig-store-*` name. The tarball carries `dig-store` + `digs`
+  (a first-class alias binary, `digs <args>` == `dig-store <args>`, resolved as an
+  **optional extra** — `PKG_dig_store_EXTRA_BINS` — and skipped non-fatally on any
+  release that predates it). The `.deb` additionally ships a `/usr/bin/digstore` →
+  `dig-store` compat symlink (`PKG_dig_store_COMPAT_SYMLINKS`).
 - `DIG-Network/dig-node`'s `release.yml` publishes raw `dig-node-<ver>-linux-{x64,arm64}`
   binaries on a tag — which is what `config.sh` targets. (No `linux-arm64` asset is
   published yet, so arm64 is skipped non-fatally; see the note below.)
@@ -118,7 +123,7 @@ The build resolves each template; if the asset is absent it **skips** that packa
 (non-fatal), and the apt repo is published with whatever debs DID build. The pipeline
 stays green. When upstream attaches matching assets, packaging picks them up with **no
 code change**. To point at a different source without editing `config.sh`, set per-run
-env overrides in CI: `DIGSTORE_TAG`, `DIGSTORE_ASSET_TEMPLATE`, `DIG_NODE_TAG`,
+env overrides in CI: `DIG_STORE_TAG`, `DIG_STORE_ASSET_TEMPLATE`, `DIG_NODE_TAG`,
 `DIG_NODE_ASSET_TEMPLATE`.
 
 > `arm64` is best-effort: an arch with no matching asset is skipped the same way.
