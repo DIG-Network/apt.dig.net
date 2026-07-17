@@ -50,10 +50,10 @@ asset_name() {
 }
 
 # extra_bin_path ARCHIVE_BIN_PATH NAME -> the archive-relative path of an "extra"
-# binary (e.g. digstore's `digs` alias, PKG_*_EXTRA_BINS) that ships in the SAME
+# binary (e.g. dig-store's `digs` alias, PKG_*_EXTRA_BINS) that ships in the SAME
 # release archive, alongside the main binary at ARCHIVE_BIN_PATH — same directory,
-# different filename. Root-level main bin ("digstore") -> root-level extra ("digs");
-# a nested main bin ("bin/digstore") -> the same nested dir ("bin/digs").
+# different filename. Root-level main bin ("dig-store") -> root-level extra ("digs");
+# a nested main bin ("bin/dig-store") -> the same nested dir ("bin/digs").
 extra_bin_path() {
   local inner="$1" name="$2" dir
   dir="$(dirname -- "$inner")"

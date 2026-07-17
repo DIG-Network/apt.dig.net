@@ -17,6 +17,6 @@
   <text x="105" y="128" font-family="'Space Mono', ui-monospace, monospace" font-size="64" font-weight="700" fill="#ffffff">apt</text>
   <text x="110" y="330" font-family="'Space Grotesk', 'Segoe UI', sans-serif" font-size="64" font-weight="700" fill="#ffffff">DIG Network</text>
   <text x="110" y="400" font-family="'Space Grotesk', 'Segoe UI', sans-serif" font-size="64" font-weight="700" fill="#FF6FE8">APT repository</text>
-  <text x="110" y="460" font-family="'Space Grotesk', 'Segoe UI', sans-serif" font-size="28" fill="#C9C4E8">apt install dig-node digstore</text>
+  <text x="110" y="460" font-family="'Space Grotesk', 'Segoe UI', sans-serif" font-size="28" fill="#C9C4E8">apt install dig-node dig-store</text>
   <text x="110" y="560" font-family="'Space Mono', ui-monospace, monospace" font-size="26" fill="#8A87A8">apt.dig.net</text>
 </svg>

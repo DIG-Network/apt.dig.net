@@ -18,15 +18,15 @@ contains() { # contains DESC HAYSTACK NEEDLE
   case "$2" in *"$3"*) printf 'ok   - %s\n' "$1" ;;
     *) printf 'FAIL - %s\n     %q not found in output\n' "$1" "$3"; fails=$((fails + 1)) ;; esac; }
 
-# --- control rendering: digstore (no service) ---
-ctrl="$(render_control digstore v0.6.0 amd64 1234)"
-contains "digstore control has Package"        "$ctrl" "Package: digstore"
-contains "digstore control has deb Version"    "$ctrl" "Version: 0.6.0"
-contains "digstore control has Architecture"   "$ctrl" "Architecture: amd64"
-contains "digstore control has Section"         "$ctrl" "Section: utils"
-contains "digstore control has Installed-Size" "$ctrl" "Installed-Size: 1234"
-contains "digstore control has Maintainer"     "$ctrl" "Maintainer: DIG Network"
-contains "digstore control has Description"    "$ctrl" "Description: DIG Network content-addressable store CLI"
+# --- control rendering: dig-store (no service) ---
+ctrl="$(render_control dig-store v0.14.0 amd64 1234)"
+contains "dig-store control has Package"        "$ctrl" "Package: dig-store"
+contains "dig-store control has deb Version"    "$ctrl" "Version: 0.14.0"
+contains "dig-store control has Architecture"   "$ctrl" "Architecture: amd64"
+contains "dig-store control has Section"         "$ctrl" "Section: utils"
+contains "dig-store control has Installed-Size" "$ctrl" "Installed-Size: 1234"
+contains "dig-store control has Maintainer"     "$ctrl" "Maintainer: DIG Network"
+contains "dig-store control has Description"    "$ctrl" "Description: DIG Network content-addressable store CLI"
 
 # --- control rendering: dig-node (service; key-segment mapping) ---
 nctrl="$(render_control dig-node v0.5.29 arm64)"
@@ -39,11 +39,12 @@ case "$nctrl" in *"Installed-Size"*) printf 'FAIL - dig-node omits Installed-Siz
   *) printf 'ok   - dig-node omits Installed-Size when unset\n';; esac
 
 # --- extra_bin_path: the digs alias lives beside the main bin in the archive ---
-check "extra_bin_path at archive root"     "digs"     "$(extra_bin_path digstore digs)"
-check "extra_bin_path under a subdir"      "bin/digs" "$(extra_bin_path bin/digstore digs)"
+check "extra_bin_path at archive root"     "digs"     "$(extra_bin_path dig-store digs)"
+check "extra_bin_path under a subdir"      "bin/digs" "$(extra_bin_path bin/dig-store digs)"
 
-# --- config: digstore declares digs as an extra binary to ship alongside it ---
-check "digstore EXTRA_BINS declares digs" "digs" "$(pkg_var digstore EXTRA_BINS)"
+# --- config: dig-store declares digs as an extra binary + digstore as a compat symlink ---
+check "dig-store EXTRA_BINS declares digs"          "digs"     "$(pkg_var dig-store EXTRA_BINS)"
+check "dig-store COMPAT_SYMLINKS declares digstore" "digstore" "$(pkg_var dig-store COMPAT_SYMLINKS)"
 
 # --- a real dpkg-deb build round-trip (skipped if tooling absent) ---
 if command -v dpkg-deb >/dev/null 2>&1; then
@@ -79,16 +80,21 @@ if command -v dpkg-deb >/dev/null 2>&1; then
   contains "unit is loopback-scoped"      "$unit" "127.0.0.1"
   contains "unit WantedBy multi-user"     "$unit" "WantedBy=multi-user.target"
 
-  # --- digstore ships the `digs` alias binary alongside `digstore` (issue #434 /
-  # digstore#16: `digs` is a first-class alias binary, `digs <args>` == `digstore
-  # <args>`). stage_deb takes extra NAME:SRC pairs beyond the main binary. ---
-  fakedigstore="$work/digstore"; printf '#!/bin/sh\necho digstore fake\n' > "$fakedigstore"
+  # --- dig-store ships the `digs` alias binary alongside `dig-store` (issue #434 /
+  # digstore#16: `digs` is a first-class alias binary, `digs <args>` == `dig-store
+  # <args>`) AND a transitional `digstore` -> `dig-store` compat symlink (the repo was
+  # renamed digstore -> dig-store, #703/#704; the symlink keeps existing `digstore`
+  # scripts working). stage_deb takes extra NAME:SRC pairs beyond the main binary and
+  # renders the package's COMPAT_SYMLINKS. ---
+  fakedigstore="$work/dig-store"; printf '#!/bin/sh\necho dig-store fake\n' > "$fakedigstore"
   fakedigs="$work/digs"; printf '#!/bin/sh\necho digs fake\n' > "$fakedigs"
-  digstore_deb="$(stage_deb digstore v0.12.0 amd64 "$fakedigstore" "$work/stage-digstore" "$out" "digs:$fakedigs")"
-  check "digstore stage_deb produced a .deb" "1" "$([ -f "$digstore_deb" ] && echo 1 || echo 0)"
+  digstore_deb="$(stage_deb dig-store v0.14.0 amd64 "$fakedigstore" "$work/stage-dig-store" "$out" "digs:$fakedigs")"
+  check "dig-store stage_deb produced a .deb" "1" "$([ -f "$digstore_deb" ] && echo 1 || echo 0)"
   digstore_files="$(dpkg-deb -c "$digstore_deb")"
-  contains "digstore deb ships /usr/bin/digstore" "$digstore_files" "./usr/bin/digstore"
-  contains "digstore deb ships /usr/bin/digs (alias binary)" "$digstore_files" "./usr/bin/digs"
+  contains "dig-store deb ships /usr/bin/dig-store" "$digstore_files" "./usr/bin/dig-store"
+  contains "dig-store deb ships /usr/bin/digs (alias binary)" "$digstore_files" "./usr/bin/digs"
+  # The transitional symlink shows in `dpkg-deb -c` as `./usr/bin/digstore -> dig-store`.
+  contains "dig-store deb ships /usr/bin/digstore compat symlink" "$digstore_files" "./usr/bin/digstore -> dig-store"
 else
   printf 'skip - dpkg-deb not present; control rendering still asserted\n'
 fi
