@@ -130,105 +130,20 @@ env overrides in CI: `DIG_STORE_TAG`, `DIG_STORE_ASSET_TEMPLATE`, `DIG_NODE_TAG`
 
 ---
 
-## Local development
+## Local development & deployment
 
-Requires a Linux host (or WSL) with `dpkg-dev` (`dpkg-deb`), `apt-utils`
-(`apt-ftparchive`), and `gnupg`.
+Procedures live in `runbooks/` (CLAUDE.md §4.4):
 
-```bash
-make test          # run the test suite (self-skips legs whose tooling is absent)
-make lint          # shellcheck + actionlint + terraform fmt/validate (each optional)
-make debs          # download upstream assets + build every available .deb into dist/pool/main
-make repo GPG_FPR=<fingerprint>   # assemble + sign the repo into dist/ (omit GPG_FPR for unsigned)
-```
+- **[`runbooks/local-development.md`](runbooks/local-development.md)** — prerequisites,
+  the `make test`/`lint`/`debs`/`repo` commands, and the test suite.
+- **[`runbooks/deployment.md`](runbooks/deployment.md)** — the push-to-`main` OIDC deploy,
+  the GPG-key + AWS-infra + deploy-role provisioning, how to verify it went live, and the
+  secrets handling.
 
-### Tests
+The repo is **public**: no secrets live in the code — the GPG **private** key is the CI
+secret `APT_GPG_PRIVATE_KEY` (only the **public** key is exported to `/dig.gpg`) and AWS
+access is via OIDC. Never print or commit a private key. Full detail in the deployment
+runbook.
 
-- `tests/test_version_resolution.sh` — version/tag normalisation + asset-name
-  resolution (pure logic; runs anywhere).
-- `tests/test_deb_layout.sh` — `DEBIAN/control` rendering + a real `dpkg-deb` build of
-  a service package, asserting the binary lands on PATH, the unit ships + enables, and
-  the maintainer scripts are present.
-- `tests/test_repo_metadata.sh` — a real `apt-ftparchive` pool scan + `Release`
-  generation + GPG **sign and verify** round-trip (proves `InRelease`/`Release.gpg`
-  verify against the published `dig.gpg`).
-
----
-
-## Deployment
-
-The deploy is **push-to-main** (mirrors dig.net / status.dig.net): build the debs,
-sign the repo, `aws s3 sync dist s3://<bucket> --delete`, `aws cloudfront
-create-invalidation`. Auth is GitHub **OIDC** (no stored AWS keys).
-
-It has two **no-op gates** so it is green before the infra/secret exist:
-
-1. **Signing key** — without the `APT_GPG_PRIVATE_KEY` secret the repo is built
-   *unsigned* and the S3 sync is **skipped** (an unsigned repo is useless to apt).
-2. **Infra** — without the repo vars `APT_S3_BUCKET`,
-   `APT_CLOUDFRONT_DISTRIBUTION_ID`, `CI_DEPLOY_ROLE_ARN` the sync is **skipped**
-   (build still verified).
-
-### What the parent must provision (out of band)
-
-> Nothing here is provisioned yet. Until it is, the deploy builds + verifies and
-> no-ops cleanly.
-
-**1. GPG signing key (secret `APT_GPG_PRIVATE_KEY`)**
-
-```bash
-# Generate an ed25519 signing key (no passphrase, for CI), export the PRIVATE key,
-# and store it as the repo/org secret APT_GPG_PRIVATE_KEY (ascii-armored).
-cat > keygen <<'EOF'
-%no-protection
-Key-Type: eddsa
-Key-Curve: ed25519
-Key-Usage: sign
-Name-Real: DIG Network
-Name-Email: packages@dig.net
-Expire-Date: 0
-%commit
-EOF
-gpg --batch --gen-key keygen
-FPR=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr:/{print $10; exit}')
-gpg --armor --export-secret-keys "$FPR" > apt-signing-private.asc
-gh secret set APT_GPG_PRIVATE_KEY --repo DIG-Network/apt.dig.net < apt-signing-private.asc
-# Keep apt-signing-private.asc OFFLINE/secret; CI exports the matching PUBLIC key
-# to /dig.gpg automatically. Never commit either.
-```
-
-**2. AWS infra** — apply the Terraform (or create equivalently with the AWS CLI):
-
-```bash
-cd infra
-terraform init
-terraform apply   # defaults target bucket apt-dig-net, the *.dig.net cert + zone
-# Note the outputs: s3_bucket, cloudfront_distribution_id
-```
-
-This creates: S3 bucket `apt-dig-net` (private, OAC), a CloudFront distribution
-(reusing the `*.dig.net` ACM cert `aafcd24b-…`, with caching disabled for `dists/*` +
-`dig.gpg` so `apt update` is never stale), and the `apt.dig.net` A/AAAA aliases in the
-dig.net Route53 zone.
-
-**3. OIDC deploy role + repo vars** — mirror the other sites' least-privilege role
-(`s3:*Object`/`s3:ListBucket` on `apt-dig-net`, `cloudfront:CreateInvalidation` on the
-distribution; trust `repo:DIG-Network/apt.dig.net` on `main`). Then set the repo vars:
-
-```bash
-gh variable set APT_S3_BUCKET --repo DIG-Network/apt.dig.net --body apt-dig-net
-gh variable set APT_CLOUDFRONT_DISTRIBUTION_ID --repo DIG-Network/apt.dig.net --body <dist-id>
-gh variable set CI_DEPLOY_ROLE_ARN --repo DIG-Network/apt.dig.net --body <role-arn>
-```
-
-Once the secret + vars exist, the next push to `main` publishes the signed repo and
-`https://apt.dig.net` goes live.
-
----
-
-## Security
-
-This is a **public** repo. No secrets live in the code: the GPG **private** key is the
-CI secret `APT_GPG_PRIVATE_KEY` (imported into a scratch keyring at deploy time and
-never written to the repo output — only the **public** key is exported to `/dig.gpg`),
-and AWS access is via OIDC (no stored keys). Never print or commit a private key.
+Normative contract: **[`SPEC.md`](SPEC.md)** — the asset-name template scheme, the Debian
+package/service layout invariants, and the flat apt-repo structure.

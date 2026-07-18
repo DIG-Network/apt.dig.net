@@ -1,66 +1,49 @@
 #!/usr/bin/env bash
-# test_dig_node_port.sh — ensure dig-node port is 9778, not 8080 (drift guard).
-# §5.3 defines 9778 as the canonical dig_constants::DIG_NODE_PORT. This test fails
-# if any file refers to 8080 as the dig-node port, ensuring the value never drifts
-# back to the old default.
+# test_dig_node_port.sh — the dig-node port drift guard.
+#
+# 9778 is the CANONICAL dig-node port (published upstream as
+# `dig_constants::DIG_NODE_PORT`; §5.3 / SYSTEM.md). config.sh declares it ONCE as
+# PKG_dig_node_PORT — this repo's single source of truth. This test enforces that
+# single-sourcing two ways:
+#   1. every file that quotes the port (the systemd unit, README, the site) matches
+#      the value declared in config.sh, so a doc can't silently drift from the unit;
+#   2. the old 8080 default (the dig_ecosystem #315 drift this repo already corrected)
+#      appears as a node port NOWHERE in the tracked tree.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
+# shellcheck source=../packaging/lib/common.sh
+. "$ROOT/packaging/lib/common.sh"
+# shellcheck source=../packaging/config.sh
+. "$ROOT/packaging/config.sh"
+# shellcheck source=lib/assert.sh
+. "$HERE/lib/assert.sh"
 
-fails=0
+PORT="$(pkg_var dig-node PORT)"
 
-# Check packaging/debian/dig-node/dig-node.service for port references
-if grep -q ':8080\|8080' "$ROOT/packaging/debian/dig-node/dig-node.service" 2>/dev/null; then
-  echo "FAIL - dig-node.service still references 8080"
-  grep -n ':8080\|8080' "$ROOT/packaging/debian/dig-node/dig-node.service" || true
-  fails=$((fails + 1))
-else
-  echo "ok   - dig-node.service uses 9778 (not 8080)"
-fi
+# The canonical value is the one this suite pins; a bump lands here first, then flows.
+check "config.sh declares the canonical dig-node port" "9778" "$PORT"
 
-# Check README.md for port references
-if grep -q ':8080' "$ROOT/README.md" 2>/dev/null; then
-  echo "FAIL - README.md still references 8080"
-  grep -n ':8080' "$ROOT/README.md" || true
-  fails=$((fails + 1))
-else
-  echo "ok   - README.md uses 9778 (not 8080)"
-fi
-
-# Check site/index.html for port references
-if grep -q ':8080' "$ROOT/site/index.html" 2>/dev/null; then
-  echo "FAIL - site/index.html still references 8080"
-  grep -n ':8080' "$ROOT/site/index.html" || true
-  fails=$((fails + 1))
-else
-  echo "ok   - site/index.html uses 9778 (not 8080)"
-fi
-
-# Check site/llms.txt for port references
-if grep -q ':8080' "$ROOT/site/llms.txt" 2>/dev/null; then
-  echo "FAIL - site/llms.txt still references 8080"
-  grep -n ':8080' "$ROOT/site/llms.txt" || true
-  fails=$((fails + 1))
-else
-  echo "ok   - site/llms.txt uses 9778 (not 8080)"
-fi
-
-# Verify that 9778 is actually present in the key files
-for file in \
-  "$ROOT/packaging/debian/dig-node/dig-node.service" \
-  "$ROOT/README.md" \
-  "$ROOT/site/index.html" \
-  "$ROOT/site/llms.txt"; do
-  if ! grep -q '9778' "$file" 2>/dev/null; then
-    echo "FAIL - $file does not reference 9778"
-    fails=$((fails + 1))
-  else
-    echo "ok   - $file references 9778"
-  fi
+# Every file that quotes the port must quote the config value, binding docs to the unit.
+for rel in \
+  "packaging/debian/dig-node/dig-node.service" \
+  "README.md" \
+  "site/index.html" \
+  "site/llms.txt"; do
+  body="$(cat "$ROOT/$rel")"
+  contains "$rel references the config port ($PORT)" "$body" "$PORT"
 done
 
-if [ "$fails" -ne 0 ]; then
-  printf '\n%d assertion(s) failed\n' "$fails" >&2
-  exit 1
+# Repo-wide: no file may USE 8080 as the node port (the #315 drift). We match port
+# SYNTAX (`:8080`, `=8080`, `8080/`), not the bare number — so historical prose like
+# the CHANGELOG's "from 8080 to 9778" and config.sh's explanatory comment don't trip it.
+port_8080_hits="$(git -C "$ROOT" grep -nE '[:=]8080|8080/' \
+  -- ':!tests/test_dig_node_port.sh' 2>/dev/null || true)"
+if [ -n "$port_8080_hits" ]; then
+  printf 'FAIL - 8080 still referenced as a node port:\n%s\n' "$port_8080_hits"
+  fails=$((fails + 1))
+else
+  printf 'ok   - no 8080 node-port reference anywhere in the tree\n'
 fi
-printf '\nall dig-node port assertions passed\n'
+
+assert_summary "dig-node port"

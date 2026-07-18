@@ -19,7 +19,8 @@ test:
 lint:
 	@command -v shellcheck >/dev/null 2>&1 && \
 	  shellcheck -x packaging/lib/common.sh packaging/config.sh packaging/build-deb.sh \
-	    packaging/repo/generate-repo.sh packaging/inject-site-version.sh tests/*.sh \
+	    packaging/repo/generate-repo.sh packaging/inject-site-version.sh \
+	    tests/lib/assert.sh tests/*.sh \
 	    || echo "shellcheck not installed — skipping"
 	@command -v actionlint >/dev/null 2>&1 && actionlint || echo "actionlint not installed — skipping"
 	@command -v terraform >/dev/null 2>&1 && ( cd infra && terraform fmt -check && terraform validate ) \

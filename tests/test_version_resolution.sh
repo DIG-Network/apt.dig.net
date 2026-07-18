@@ -7,16 +7,8 @@ ROOT="$(cd "$HERE/.." && pwd)"
 . "$ROOT/packaging/lib/common.sh"
 # shellcheck source=../packaging/config.sh
 . "$ROOT/packaging/config.sh"
-
-fails=0
-check() { # check DESC EXPECTED ACTUAL
-  if [ "$2" = "$3" ]; then
-    printf 'ok   - %s\n' "$1"
-  else
-    printf 'FAIL - %s\n     expected: %q\n     actual:   %q\n' "$1" "$2" "$3"
-    fails=$((fails + 1))
-  fi
-}
+# shellcheck source=lib/assert.sh
+. "$HERE/lib/assert.sh"
 
 # strip_v: tolerates both v-prefixed and bare tags.
 check "strip_v drops leading v"        "1.2.3"   "$(strip_v v1.2.3)"
@@ -57,8 +49,4 @@ check "pkg_var dig-node SERVICE" "yes"     "$(pkg_var dig-node SERVICE)"
 check "pkg_var dig-store SERVICE" "no"     "$(pkg_var dig-store SERVICE)"
 check "pkg_var dig-store BIN"     "dig-store" "$(pkg_var dig-store BIN)"
 
-if [ "$fails" -ne 0 ]; then
-  printf '\n%d assertion(s) failed\n' "$fails" >&2
-  exit 1
-fi
-printf '\nall version-resolution assertions passed\n'
+assert_summary "version-resolution"
