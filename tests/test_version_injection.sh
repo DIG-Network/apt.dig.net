@@ -12,20 +12,8 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
-
-fails=0
-contains() { # contains DESC HAYSTACK NEEDLE
-  case "$2" in *"$3"*) printf 'ok   - %s\n' "$1" ;;
-    *) printf 'FAIL - %s\n     %q not found in output\n' "$1" "$3"; fails=$((fails + 1)) ;; esac
-}
-not_contains() { # not_contains DESC HAYSTACK NEEDLE
-  case "$2" in *"$3"*) printf 'FAIL - %s\n     %q unexpectedly found in output\n' "$1" "$3"; fails=$((fails + 1)) ;;
-    *) printf 'ok   - %s\n' "$1" ;; esac
-}
-file_exists() { # file_exists DESC PATH
-  if [ -f "$2" ]; then printf 'ok   - %s\n' "$1"; else
-    printf 'FAIL - %s\n     %q does not exist\n' "$1" "$2"; fails=$((fails + 1)); fi
-}
+# shellcheck source=lib/assert.sh
+. "$HERE/lib/assert.sh"
 
 # --- source files carry the placeholder, not a hardcoded literal ------------------
 file_exists "site/version.js exists" "$ROOT/site/version.js"
@@ -61,5 +49,4 @@ makefile="$(cat "$ROOT/Makefile")"
 contains "Makefile copies version.js into dist" "$makefile" "version.js"
 contains "Makefile invokes packaging/inject-site-version.sh" "$makefile" "inject-site-version.sh"
 
-if [ "$fails" -ne 0 ]; then printf '\n%d assertion(s) failed\n' "$fails" >&2; exit 1; fi
-printf '\nall version-injection assertions passed\n'
+assert_summary "version-injection"

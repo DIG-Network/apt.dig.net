@@ -12,12 +12,8 @@ ROOT="$(cd "$HERE/.." && pwd)"
 . "$ROOT/packaging/lib/common.sh"
 # shellcheck source=../packaging/config.sh
 . "$ROOT/packaging/config.sh"
-
-fails=0
-contains() { case "$2" in *"$3"*) printf 'ok   - %s\n' "$1" ;;
-  *) printf 'FAIL - %s\n     %q not found\n' "$1" "$3"; fails=$((fails + 1)) ;; esac; }
-check() { if [ "$2" = "$3" ]; then printf 'ok   - %s\n' "$1"; else
-  printf 'FAIL - %s\n     expected: %q actual: %q\n' "$1" "$2" "$3"; fails=$((fails + 1)); fi; }
+# shellcheck source=lib/assert.sh
+. "$HERE/lib/assert.sh"
 
 # We need dpkg-scanpackages or apt-ftparchive to build a Packages index from a pool.
 SCAN=""
@@ -112,5 +108,4 @@ contains "feed.xml lists dig-store"            "$feedbody" "<title>dig-store"
 contains "feed.xml lists dig-node"             "$feedbody" "<title>dig-node"
 contains "feed.xml self link"                  "$feedbody" 'rel="self"'
 
-if [ "$fails" -ne 0 ]; then printf '\n%d assertion(s) failed\n' "$fails" >&2; exit 1; fi
-printf '\nall repo-metadata assertions passed\n'
+assert_summary "repo-metadata"

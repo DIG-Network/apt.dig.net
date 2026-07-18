@@ -133,6 +133,15 @@ PKG_dig_node_ARCHIVE_BIN_PATH=""
 PKG_dig_node_SERVICE_USER="dig-node"
 PKG_dig_node_SERVICE_GROUP="dig-node"
 PKG_dig_node_CACHE_DIR="/var/lib/dig-node"
+# Loopback bind address the systemd unit sets via DIG_NODE_HOST / DIG_NODE_PORT.
+# 9778 is the CANONICAL dig-node port — published upstream as `dig_constants::DIG_NODE_PORT`
+# (SYSTEM.md: dig-node / dig-dns / dig-installer import that constant rather than
+# hardcoding the literal). This declaration is THIS repo's single source of truth for the
+# value: the unit ships it, the README + site quote it, and test_dig_node_port.sh asserts
+# every one of those references matches the constant here and that the old 8080 default
+# (dig_ecosystem #315 drift) appears nowhere. Change the port in ONE place — here.
+PKG_dig_node_HOST="127.0.0.1"
+PKG_dig_node_PORT="9778"
 
 # The packages this repo produces (underscored keys; '-' is not valid in a var name,
 # so dig-node's keys use dig_node — see pkg_var()).

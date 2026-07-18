@@ -10,16 +10,8 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 SITE="$ROOT/site"
-
-fails=0
-check() { if [ "$2" = "$3" ]; then printf 'ok   - %s\n' "$1"; else
-  printf 'FAIL - %s\n     expected: %q\n     actual:   %q\n' "$1" "$2" "$3"; fails=$((fails + 1)); fi; }
-contains() { # contains DESC HAYSTACK NEEDLE
-  case "$2" in *"$3"*) printf 'ok   - %s\n' "$1" ;;
-    *) printf 'FAIL - %s\n     %q not found in output\n' "$1" "$3"; fails=$((fails + 1)) ;; esac; }
-file_exists() { # file_exists DESC PATH
-  if [ -f "$2" ]; then printf 'ok   - %s\n' "$1"; else
-    printf 'FAIL - %s\n     %q does not exist\n' "$1" "$2"; fails=$((fails + 1)); fi; }
+# shellcheck source=lib/assert.sh
+. "$HERE/lib/assert.sh"
 
 file_exists "site/llms.txt exists" "$SITE/llms.txt"
 llms="$(cat "$SITE/llms.txt")"
@@ -94,5 +86,4 @@ file_exists "tests/a11y/package.json exists" "$ROOT/tests/a11y/package.json"
 runsh="$(cat "$ROOT/tests/run.sh")"
 contains "tests/run.sh invokes the a11y (axe) gate" "$runsh" "a11y (axe WCAG 2.2 AA)"
 
-if [ "$fails" -ne 0 ]; then printf '\n%d assertion(s) failed\n' "$fails" >&2; exit 1; fi
-printf '\nall frontend-baseline assertions passed\n'
+assert_summary "frontend-baseline"

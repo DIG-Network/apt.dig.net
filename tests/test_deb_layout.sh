@@ -10,13 +10,8 @@ ROOT="$(cd "$HERE/.." && pwd)"
 . "$ROOT/packaging/lib/common.sh"
 # shellcheck source=../packaging/config.sh
 . "$ROOT/packaging/config.sh"
-
-fails=0
-check() { if [ "$2" = "$3" ]; then printf 'ok   - %s\n' "$1"; else
-  printf 'FAIL - %s\n     expected: %q\n     actual:   %q\n' "$1" "$2" "$3"; fails=$((fails + 1)); fi; }
-contains() { # contains DESC HAYSTACK NEEDLE
-  case "$2" in *"$3"*) printf 'ok   - %s\n' "$1" ;;
-    *) printf 'FAIL - %s\n     %q not found in output\n' "$1" "$3"; fails=$((fails + 1)) ;; esac; }
+# shellcheck source=lib/assert.sh
+. "$HERE/lib/assert.sh"
 
 # --- control rendering: dig-store (no service) ---
 ctrl="$(render_control dig-store v0.14.0 amd64 1234)"
@@ -99,5 +94,4 @@ else
   printf 'skip - dpkg-deb not present; control rendering still asserted\n'
 fi
 
-if [ "$fails" -ne 0 ]; then printf '\n%d assertion(s) failed\n' "$fails" >&2; exit 1; fi
-printf '\nall deb-layout assertions passed\n'
+assert_summary "deb-layout"
