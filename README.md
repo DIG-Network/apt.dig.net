@@ -64,7 +64,7 @@ See the docs: <https://docs.dig.net/docs/run-a-node>.
 ```
 upstream GitHub releases                this repo (CI)                     AWS
 ─────────────────────────               ──────────────                    ───
-DIG-Network/dig-store  ─┐   packaging/build-deb.sh   ─┐
+DIG-Network/digs  ─┐   packaging/build-deb.sh   ─┐
 DIG-Network/dig-node   ─┘   (download asset → lay     │   make repo →  S3 apt-dig-net
                             out deb → dpkg-deb)        ├─ pool/main/*.deb   └─ CloudFront
                             packaging/repo/            │   dists/stable/...    └─ apt.dig.net
@@ -101,12 +101,12 @@ time. The asset names packaging expects are declared per package in `config.sh`:
 
 | Package    | Repo                     | Expected asset (per arch)                              |
 | ---------- | ------------------------ | ----------------------------------------------------- |
-| `dig-store` | `DIG-Network/dig-store` | `dig-store-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` (contains `dig-store` + `digs` + a `digstore` compat entry) |
+| `dig-store` | `DIG-Network/digs` | `dig-store-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` (contains `dig-store` + `digs` + a `digstore` compat entry) |
 | `dig-node` | `DIG-Network/dig-node`   | `dig-node-<ver>-linux-{x64,arm64}` (bare binary)       |
 
 **Asset availability:**
 
-- `DIG-Network/dig-store`'s release publishes a raw per-arch
+- `DIG-Network/digs`'s release publishes a raw per-arch
   `dig-store-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` release asset — which is
   what `config.sh` targets. The repo/binary was renamed `digstore` → `dig-store`
   (#703), so the release dual-publishes a transitional `digstore-<ver>-…` tarball too;

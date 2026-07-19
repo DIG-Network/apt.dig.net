@@ -57,7 +57,7 @@ present, else the default map. (dig-node overrides to Node's `x64`/`arm64` namin
 
 | Package     | Repo                    | Asset template                                          | Bin in archive |
 | ----------- | ----------------------- | ------------------------------------------------------- | -------------- |
-| `dig-store` | `DIG-Network/dig-store` | `dig-store-{ver}-{arch}-unknown-linux-gnu.tar.gz`       | `dig-store`    |
+| `dig-store` | `DIG-Network/digs` | `dig-store-{ver}-{arch}-unknown-linux-gnu.tar.gz`       | `dig-store`    |
 | `dig-node`  | `DIG-Network/dig-node`  | `dig-node-{ver}-linux-{arch}` (bare binary, no archive) | (bare)         |
 
 `PKG_<pkg>_ARCHIVE_BIN_PATH` is the path of the binary inside the downloaded archive; an

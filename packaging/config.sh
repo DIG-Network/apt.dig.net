@@ -17,7 +17,7 @@
 #   - Debian control metadata (section, depends, description),
 #   - whether the package installs a systemd service.
 #
-# Asset reality: the dig-store repo (DIG-Network/dig-store — renamed from `digstore`,
+# Asset reality: the dig-store repo (DIG-Network/digs — renamed from `digstore`,
 # #703/#704) and dig-node publish per-arch release assets under the names below.
 # build-deb.sh resolves them at build time and SKIPS (non-fatal) any arch whose asset
 # is absent, so the pipeline stays green until upstream publishes matching assets. See
@@ -61,11 +61,11 @@ asset_arch_for() {
 # The var-key segment is `dig_store` (dig-store with '-'->'_', per pkg_var()): the
 # package id in $APT_PACKAGES is `dig-store`, so its Debian package name AND the
 # installed binary are both `dig-store`. The repo was renamed digstore -> dig-store
-# (DIG-Network/dig-store, epic #703): the CLI binary is `dig-store`, `digs` stays a
+# (DIG-Network/digs, epic #703): the CLI binary is `dig-store`, `digs` stays a
 # first-class alias, and a transitional `digstore` -> `dig-store` symlink ships in the
 # .deb so existing `digstore …` scripts keep working during the rename.
 
-PKG_dig_store_REPO="DIG-Network/dig-store"
+PKG_dig_store_REPO="DIG-Network/digs"
 PKG_dig_store_BIN="dig-store"
 PKG_dig_store_SECTION="utils"
 PKG_dig_store_DEPENDS="libc6"
