@@ -42,4 +42,4 @@ Architectures: `amd64` (and `arm64` when upstream publishes a matching release a
 
 - Repo: https://github.com/DIG-Network/apt.dig.net
 - Packaging is driven from `packaging/config.sh`; debs are built from the upstream
-  GitHub releases of DIG-Network/dig-store and DIG-Network/dig-node.
+  GitHub releases of DIG-Network/digs and DIG-Network/dig-node.
