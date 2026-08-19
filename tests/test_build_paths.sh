@@ -91,6 +91,7 @@ file_exists "dig-app produces a .deb for amd64" "$pool/dig-app_12.28.0_amd64.deb
 # binary — for dig-app that would be `/usr/bin/dign`, which dig_ecosystem#1724 has not
 # awarded to either dig-app or dig-node.
 staged_args="$(cat "$staged_file" 2>/dev/null || true)"
+# shellcheck disable=SC2086  # the split is the point: it counts the recorded arguments.
 check "dig-app stages exactly its own binary, with no extras" \
   "6" "$(set -- $staged_args; printf '%s' "$#")"
 not_contains "dign is not packaged while its owner is undecided" "$staged_args" "dign"
