@@ -36,6 +36,7 @@ trap 'rm -rf "$TWORK"' EXIT
 # reproduce it, which is what makes "passed through" distinguishable from "rebuilt with
 # equivalent metadata" rather than merely consistent with it.
 PREBUILT_MARKER='UPSTREAM-DEB-PAYLOAD-NOT-REBUILT'
+# shellcheck disable=SC2329  # invoked indirectly, from build_one.
 fetch_asset() {
   case "$3" in
     dig-dns_0.15.1-1_amd64.deb) printf '%s' "$PREBUILT_MARKER" > "$4"; return 0 ;;
@@ -51,7 +52,7 @@ check "dig-dns .deb is upstream's bytes, verbatim" \
   "$PREBUILT_MARKER" "$(cat "$pool/dig-dns_0.15.1-1_amd64.deb" 2>/dev/null || true)"
 # A prebuilt package must not also emit a rebuilt artifact under the derived name.
 check "dig-dns is not additionally rebuilt" \
-  "" "$(ls "$pool" | grep -v '^dig-dns_0.15.1-1_amd64.deb$' || true)"
+  "" "$(find "$pool" -maxdepth 1 -type f ! -name 'dig-dns_0.15.1-1_amd64.deb' -printf '%f ')"
 contains "the missing arm64 .deb is a non-fatal skip" "$(cat "$TWORK/dns.log")" "arm64"
 
 # ---- path 2: an extra binary published as its OWN asset reaches the package ---------
@@ -72,6 +73,7 @@ fetch_asset() {
 # substitution, so a variable assignment would be made in a subshell and lost — the
 # test would then report "dign was never staged" for a build that staged it correctly.
 staged_file="$TWORK/staged-args"
+# shellcheck disable=SC2329  # invoked indirectly, from build_one.
 stage_deb() {
   printf '%s' "$*" > "$staged_file"
   # Copy each extra binary's bytes out NOW: build_one deletes its scratch directory
