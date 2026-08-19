@@ -36,7 +36,7 @@ trap 'rm -rf "$TWORK"' EXIT
 # reproduce it, which is what makes "passed through" distinguishable from "rebuilt with
 # equivalent metadata" rather than merely consistent with it.
 PREBUILT_MARKER='UPSTREAM-DEB-PAYLOAD-NOT-REBUILT'
-# shellcheck disable=SC2329  # invoked indirectly, from build_one.
+# shellcheck disable=SC2317,SC2329  # invoked indirectly, from build_one.
 fetch_asset() {
   case "$3" in
     dig-dns_0.15.1-1_amd64.deb) printf '%s' "$PREBUILT_MARKER" > "$4"; return 0 ;;
@@ -62,6 +62,7 @@ contains "the missing arm64 .deb is a non-fatal skip" "$(cat "$TWORK/dns.log")" 
 # that `dign` is fetched from its own template and handed to staging beside the main
 # binary. Its content is distinct from dig-app's, so a stub that merely reused the
 # main download would be caught.
+# shellcheck disable=SC2317,SC2329  # invoked indirectly, from build_one.
 fetch_asset() {
   case "$3" in
     dig-app-12.28.0-linux-x64-headless) printf 'DIG-APP-HEADLESS' > "$4"; return 0 ;;
@@ -73,7 +74,7 @@ fetch_asset() {
 # substitution, so a variable assignment would be made in a subshell and lost — the
 # test would then report "dign was never staged" for a build that staged it correctly.
 staged_file="$TWORK/staged-args"
-# shellcheck disable=SC2329  # invoked indirectly, from build_one.
+# shellcheck disable=SC2317,SC2329  # invoked indirectly, from build_one.
 stage_deb() {
   printf '%s' "$*" > "$staged_file"
   # Copy each extra binary's bytes out NOW: build_one deletes its scratch directory
