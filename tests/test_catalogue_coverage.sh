@@ -40,23 +40,20 @@ check "dig-dns prebuilt .deb name uses the Debian arch (arm64)" \
   "dig-dns_0.15.1-1_arm64.deb" \
   "$(asset_name "$(pkg_var dig-dns PREBUILT_DEB_TEMPLATE)" v0.15.1 arm64)"
 
-# ---- dig-app: bare per-arch binaries, plus the `dign` CLI from a SEPARATE asset ----
-# Observed on DIG-Network/dig-app v12.28.0: `dig-app-12.28.0-linux-x64-headless` and
-# `dign-12.28.0-linux-x64`. The headless variant is what apt serves (see config.sh).
+# ---- dig-app: bare per-arch headless binaries, and NOTHING else --------------------
+# Observed on DIG-Network/dig-app v12.28.0: `dig-app-12.28.0-linux-x64-headless`. The
+# headless variant is what apt serves (see config.sh).
 check "dig-app asset name matches the published headless binary (amd64)" \
   "dig-app-12.28.0-linux-x64-headless" \
   "$(asset_name "$(pkg_var dig-app ASSET_TEMPLATE)" v12.28.0 "$(asset_arch_for dig-app amd64)")"
 check "dig-app ships the bare binary, not an archive member" \
   "" "$(pkg_var dig-app ARCHIVE_BIN_PATH)"
-# `dign` is its own release asset, so it cannot come through EXTRA_BINS (which reads
-# members of the SAME archive). It resolves through its own template.
+# The package ships dig-app's own binary and no other: `/usr/bin/dign` is contested
+# between dig-app and dig-node and stays unpackaged until dig_ecosystem#1724 decides it.
 check "dig-app carries no same-archive extra binaries" \
   "" "$(pkg_var dig-app EXTRA_BINS)"
-check "dig-app declares dign as a separate release asset" \
-  "dign:dign-{ver}-linux-{arch}" "$(pkg_var dig-app EXTRA_ASSET_BINS)"
-check "dign asset name matches the published CLI binary (amd64)" \
-  "dign-12.28.0-linux-x64" \
-  "$(asset_name "dign-{ver}-linux-{arch}" v12.28.0 "$(asset_arch_for dig-app amd64)")"
+check "dig-app declares no separately-published extra binaries" \
+  "" "$(pkg_var dig-app EXTRA_ASSET_BINS)"
 
 # ---- the packages that were already served must not regress ------------------------
 check "dig-node still resolves its published binary (amd64)" \

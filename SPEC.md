@@ -61,18 +61,9 @@ present, else the default map. (dig-node overrides to Node's `x64`/`arm64` namin
 | `dig-store` | `DIG-Network/digs` | `dig-store-{ver}-{arch}-unknown-linux-gnu.tar.gz`       | `dig-store`    |
 | `dig-node`  | `DIG-Network/dig-node`  | `dig-node-{ver}-linux-{arch}` (bare binary, no archive) | (bare)         |
 | `dig-app`   | `DIG-Network/dig-app`   | `dig-app-{ver}-linux-{arch}-headless` (bare binary)      | (bare)         |
-| `dig-dns`   | `DIG-Network/dig-dns`   | none — ingested as a prebuilt `.deb` (§2.4)             | n/a            |
+| `dig-dns`   | `DIG-Network/dig-dns`   | none — ingested as a prebuilt `.deb` (§2.3)             | n/a            |
 
-### 2.3 Extra binaries published as their own assets
-
-`PKG_<pkg>_EXTRA_ASSET_BINS` is a space-separated list of `NAME:TEMPLATE` entries naming
-extra binaries that upstream publishes as SEPARATE release assets rather than inside the
-package's own archive. Each MUST be resolved against the same tag and arch token as the
-main asset and downloaded independently. Their on-disk placement is §3.2's; the
-distinction here is only where the bytes come from. `dig-app`'s `dign` CLI takes this
-path. A non-resolving entry MUST be a non-fatal skip.
-
-### 2.4 Prebuilt packages — passthrough
+### 2.3 Prebuilt packages — passthrough
 
 A package declaring `PKG_<pkg>_PREBUILT_DEB_TEMPLATE` publishes its own
 maintainer-authored Debian package upstream. Such a package MUST be copied into the pool
@@ -118,7 +109,6 @@ Debian upstream version) to `~`, which sorts BEFORE the release in dpkg ordering
 ### 3.2 Extra binaries and compat symlinks
 
 `PKG_<pkg>_EXTRA_BINS` names additional executables shipped from the SAME upstream archive
-(see §2.3 for the separately-published variant)
 alongside the main binary, installed under `/usr/bin`. An extra binary that a given
 upstream release predates MUST be skipped non-fatally. `PKG_<pkg>_COMPAT_SYMLINKS` names
 `/usr/bin` symlinks pointing at the main binary (relative link, same directory). dig-store

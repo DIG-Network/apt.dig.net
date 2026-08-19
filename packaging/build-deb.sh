@@ -184,12 +184,11 @@ ingest_prebuilt() {
 # build_one PKG POOL_DIR -> resolve + download + stage every available arch.
 build_one() {
   local pkg="$1" pool="$2"
-  local repo tag tmpl inner extra_bins extra_asset_bins prebuilt override_tag override_tmpl
+  local repo tag tmpl inner extra_bins prebuilt override_tag override_tmpl
   repo="$(pkg_var "$pkg" REPO)"
   tmpl="$(pkg_var "$pkg" ASSET_TEMPLATE)"
   inner="$(pkg_var "$pkg" ARCHIVE_BIN_PATH)"
   extra_bins="$(pkg_var "$pkg" EXTRA_BINS)"
-  extra_asset_bins="$(pkg_var "$pkg" EXTRA_ASSET_BINS)"
   prebuilt="$(pkg_var "$pkg" PREBUILT_DEB_TEMPLATE)"
 
   # Per-package env overrides (UPPERCASED, '-'->'_'): <PKG>_TAG / <PKG>_ASSET_TEMPLATE.
@@ -240,23 +239,6 @@ build_one() {
         extra_args+=("$eb:$eb_dest")
       else
         warn "$pkg: extra binary '$eb' not found in $name (upstream release predates it) — shipping without it."
-      fi
-    done
-
-    # Extra binaries published as their OWN release assets (e.g. dig-app's `dign`
-    # CLI). Declared "NAME:TEMPLATE"; each is resolved against the same tag + arch
-    # token and downloaded separately, then installed under /usr/bin beside BIN. This
-    # is distinct from EXTRA_BINS, which reads members of the archive already fetched.
-    local ea ea_name ea_tmpl ea_asset ea_dest
-    for ea in $extra_asset_bins; do
-      ea_name="${ea%%:*}"
-      ea_tmpl="${ea#*:}"
-      ea_asset="$(asset_name "$ea_tmpl" "$tag" "$upstream")"
-      ea_dest="$work/bin-$arch-$ea_name"
-      if fetch_asset "$repo" "$tag" "$ea_asset" "$work/$ea_asset"         && extract_binary "$work/$ea_asset" "$inner" "$ea_dest"; then
-        extra_args+=("$ea_name:$ea_dest")
-      else
-        warn "$pkg: extra asset '$ea_asset' absent in $repo@$tag - shipping without $ea_name."
       fi
     done
 

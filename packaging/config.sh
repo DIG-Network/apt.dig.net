@@ -145,12 +145,18 @@ PKG_dig_node_PORT="9778"
 
 # ---- dig-dns (the local DNS responder; ingested as its OWN upstream .deb) ----------
 #
-# dig-dns is the one component that publishes a maintainer-authored Debian package
+# dig-dns publishes a maintainer-authored Debian package
 # (`dig-dns_<ver>-1_<debarch>.deb`) alongside its raw binaries. This repo therefore
 # PASSES IT THROUGH rather than re-deriving a .deb from the bare binary: the upstream
 # package already carries the service unit, user and resolver configuration that only
 # the dig-dns maintainers can state correctly, and a second, divergent packaging of a
 # daemon is precisely the byte-drift this ecosystem forbids.
+#
+# dig-node publishes an upstream `.deb` too (`dig-node_<ver>_<debarch>.deb`) and is NOT
+# yet on this path: it is still rebuilt here, so its unit is named `dig-node.service`
+# while upstream's is `net.dignetwork.dig-node.service` — two packagings of the same
+# daemon at the same version. Converting it is its own change with its own risk; see
+# https://github.com/DIG-Network/apt.dig.net/issues/10.
 #
 # A package declaring PREBUILT_DEB_TEMPLATE takes the passthrough path in build-deb.sh
 # and ignores every rebuild field (ASSET_TEMPLATE, SERVICE, DEPENDS, the DESC_* pair):
@@ -161,7 +167,7 @@ PKG_dig_dns_REPO="DIG-Network/dig-dns"
 PKG_dig_dns_BIN="dig-dns"
 PKG_dig_dns_PREBUILT_DEB_TEMPLATE="dig-dns_{ver}-1_{arch}.deb"
 
-# ---- dig-app (the headless node app + the `dign` CLI) ------------------------------
+# ---- dig-app (the headless node app) -----------------------------------------------
 #
 # apt serves the HEADLESS build, not the desktop one. The desktop binary is a GUI app
 # whose runtime libraries would have to appear in Depends: for the package to install
@@ -170,29 +176,27 @@ PKG_dig_dns_PREBUILT_DEB_TEMPLATE="dig-dns_{ver}-1_{arch}.deb"
 # dig-node. A desktop `dig-app` package is separate, deliberate work (it needs a real
 # dependency audit, a .desktop entry and an icon) and is NOT what this entry ships.
 #
-# `dign` is the CLI a person actually types, and upstream publishes it as its OWN
-# release asset rather than inside the dig-app archive — so it travels via
-# EXTRA_ASSET_BINS (a separate download) and not EXTRA_BINS (a member of the same
-# archive). Without it `apt install dig-app` would land a daemon with no command.
+# This package deliberately ships NO `dign` binary. Both dig-app and dig-node publish
+# something called `dign` — dig-app's gateway CLI and dig-node's arg0 alias of the node
+# binary — and which one owns `/usr/bin/dign` is an open, user-owned decision
+# (https://github.com/DIG-Network/dig_ecosystem/issues/1724). Neither upstream .deb
+# claims the path today, so packaging either here would settle that question silently,
+# by install order. It stays unpackaged until the decision is made.
 PKG_dig_app_REPO="DIG-Network/dig-app"
 PKG_dig_app_BIN="dig-app"
 PKG_dig_app_SECTION="net"
 PKG_dig_app_DEPENDS="libc6"
 PKG_dig_app_HOMEPAGE="https://dig.net"
 PKG_dig_app_MAINTAINER="DIG Network <packages@dig.net>"
-PKG_dig_app_DESC_SHORT="DIG Network app (headless build) and the dign CLI"
+PKG_dig_app_DESC_SHORT="DIG Network app (headless build)"
 PKG_dig_app_DESC_LONG=" dig-app is the DIG Network application: it manages profiles and stores,
  talks to a local dig-node, and reads and publishes DIG content. This package
- ships the HEADLESS build, for servers and hosts with no desktop session, plus
- the dign command-line client."
+ ships the HEADLESS build, for servers and hosts with no desktop session."
 PKG_dig_app_SERVICE="no"
 PKG_dig_app_ASSET_TEMPLATE="dig-app-{ver}-linux-{arch}-headless"
 PKG_dig_app_ASSET_ARCH_amd64="x64"
 PKG_dig_app_ASSET_ARCH_arm64="arm64"
 PKG_dig_app_ARCHIVE_BIN_PATH=""
-# Extra binaries that are their own release assets: "NAME:TEMPLATE" entries, resolved
-# and downloaded independently and installed under /usr/bin beside BIN.
-PKG_dig_app_EXTRA_ASSET_BINS="dign:dign-{ver}-linux-{arch}"
 
 # The packages this repo produces (underscored keys; '-' is not valid in a var name,
 # so dig-node's keys use dig_node — see pkg_var()).

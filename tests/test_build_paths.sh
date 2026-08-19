@@ -55,13 +55,14 @@ check "dig-dns is not additionally rebuilt" \
   "" "$(find "$pool" -maxdepth 1 -type f ! -name 'dig-dns_0.15.1-1_amd64.deb' -printf '%f ')"
 contains "the missing arm64 .deb is a non-fatal skip" "$(cat "$TWORK/dns.log")" "arm64"
 
-# ---- path 2: an extra binary published as its OWN asset reaches the package ---------
+# ---- path 2: a rebuilt package ships its own binary, and nothing else ---------------
 #
-# stage_deb is replaced here (and only here) to record its arguments: the real one
-# needs dpkg-deb, which is absent on most dev hosts, and the property under test is
-# that `dign` is fetched from its own template and handed to staging beside the main
-# binary. Its content is distinct from dig-app's, so a stub that merely reused the
-# main download would be caught.
+# stage_deb is replaced here (and only here) to record its arguments: the real one needs
+# dpkg-deb, which is absent on most dev hosts, and the property under test is WHICH
+# binaries reach staging. The stub still answers for `dign-12.28.0-linux-x64` — an asset
+# dig-app genuinely publishes — so a build that reintroduced `/usr/bin/dign` would
+# succeed at fetching it and be caught below, rather than passing because the download
+# happened to fail.
 # shellcheck disable=SC2317,SC2329  # invoked indirectly, from build_one.
 fetch_asset() {
   case "$3" in
@@ -72,16 +73,12 @@ fetch_asset() {
 }
 # The recording goes to a FILE, not a variable: stage_deb is invoked inside a command
 # substitution, so a variable assignment would be made in a subshell and lost — the
-# test would then report "dign was never staged" for a build that staged it correctly.
+# test would then read an empty argument list and pass no matter what was staged.
 staged_file="$TWORK/staged-args"
 # shellcheck disable=SC2317,SC2329  # invoked indirectly, from build_one.
 stage_deb() {
   printf '%s' "$*" > "$staged_file"
-  # Copy each extra binary's bytes out NOW: build_one deletes its scratch directory
-  # before returning, so reading the recorded path afterwards would see nothing and
-  # the assertion would fail on a correct build.
-  local out="$6" a
-  for a in "${@:7}"; do cp "${a#*:}" "$TWORK/staged-${a%%:*}"; done
+  local out="$6"
   printf 'deb' > "$out/$1_$(deb_version "$2")_$3.deb"
   printf '%s\n' "$out/$1_$(deb_version "$2")_$3.deb"
 }
@@ -89,11 +86,13 @@ pool="$TWORK/pool-app"; mkdir -p "$pool"
 DIG_APP_TAG=v12.28.0 build_one dig-app "$pool" 2>"$TWORK/app.log"
 
 file_exists "dig-app produces a .deb for amd64" "$pool/dig-app_12.28.0_amd64.deb"
+# stage_deb's arguments are PKG TAG ARCH BIN STAGE POOL, then one NAME:PATH pair per
+# extra binary. A seventh argument means the package installs something beyond its own
+# binary — for dig-app that would be `/usr/bin/dign`, which dig_ecosystem#1724 has not
+# awarded to either dig-app or dig-node.
 staged_args="$(cat "$staged_file" 2>/dev/null || true)"
-contains "staging receives dign as an extra binary" "$staged_args" "dign:"
-# The staged bytes must be dign's OWN — not a second copy of dig-app's binary.
-# Read the copy stage_deb made, not the recorded path: build_one deletes its scratch.
-check "the dign binary handed to staging is the dign asset" \
-  "DIGN-CLI" "$(cat "$TWORK/staged-dign" 2>/dev/null || true)"
+check "dig-app stages exactly its own binary, with no extras" \
+  "6" "$(set -- $staged_args; printf '%s' "$#")"
+not_contains "dign is not packaged while its owner is undecided" "$staged_args" "dign"
 
 assert_summary "build-paths"
