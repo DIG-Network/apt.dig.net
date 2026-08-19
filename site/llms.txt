@@ -1,7 +1,8 @@
 # apt.dig.net
 
 > The DIG Network APT repository. Ubuntu/Debian users install the DIG ecosystem with
-> `apt`: `dig-node` (the node service, run via systemd) and `dig-store` (the CLI).
+> `apt`: `dig-node` (the node service, run via systemd), `dig-store` (the CLI),
+> `dig-dns` (the local DNS responder) and `dig-app` (the headless app and `dign` CLI).
 > Flat, GPG-signed repository (suite `stable`, component `main`).
 
 ## Install
@@ -9,7 +10,7 @@
 ```
 curl -fsSL https://apt.dig.net/dig.gpg | sudo gpg --dearmor -o /usr/share/keyrings/dig.gpg
 echo "deb [signed-by=/usr/share/keyrings/dig.gpg] https://apt.dig.net stable main" | sudo tee /etc/apt/sources.list.d/dig.list
-sudo apt update && sudo apt install dig-node dig-store
+sudo apt update && sudo apt install dig-node dig-store dig-dns dig-app
 systemctl status dig-node
 ```
 

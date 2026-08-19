@@ -1,5 +1,29 @@
 # Runbook — deployment
 
+## When a deploy happens
+
+Package versions are resolved at build time from each component's `releases/latest`, so
+the published index is only as fresh as the last deploy run. Four things start one:
+
+- the daily `schedule` (06:00 UTC) — the backstop; nothing else is required for the
+  index to track upstream;
+- a `repository_dispatch` of type `upstream-release` — the fast path, for a publishing
+  repo to fire on release. No repo sends this yet;
+- a `v*` tag on this repository;
+- a manual `workflow_dispatch`.
+
+To force a re-ingest right now:
+
+```bash
+gh workflow run deploy.yml --repo DIG-Network/apt.dig.net
+gh run watch --repo DIG-Network/apt.dig.net "$(gh run list --repo DIG-Network/apt.dig.net --workflow deploy.yml --limit 1 --json databaseId -q '.[0].databaseId')"
+```
+
+GitHub disables a `schedule` trigger after 60 days with no repository activity. If the
+index stops tracking upstream with no failing run, check that the scheduled workflow is
+still enabled before looking anywhere else.
+
+
 How the signed apt repository is published to AWS, the credentials/secrets it needs, and
 how to verify it went live.
 

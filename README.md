@@ -1,8 +1,9 @@
 # apt.dig.net
 
 The DIG Network **APT repository** + its AWS infrastructure. Ubuntu/Debian users
-install the DIG ecosystem with `apt` — `dig-node` (the node service, run via systemd)
-and `dig-store` (the content-addressable store CLI) — from a flat, GPG-signed apt
+install the DIG ecosystem with `apt` — `dig-node` (the node service, run via systemd),
+`dig-store` (the content-addressable store CLI), `dig-dns` (the local DNS responder) and
+`dig-app` (the headless app plus the `dign` CLI) — from a flat, GPG-signed apt
 repository served at **https://apt.dig.net**.
 
 ---
@@ -19,7 +20,7 @@ echo "deb [signed-by=/usr/share/keyrings/dig.gpg] https://apt.dig.net stable mai
 
 # 3. Install
 sudo apt update
-sudo apt install dig-node dig-store
+sudo apt install dig-node dig-store dig-dns dig-app
 
 # 4. The node runs as a systemd service
 systemctl status dig-node
@@ -31,6 +32,8 @@ systemctl status dig-node
 | ---------- | ------------------------------------------ | ------- |
 | `dig-node` | `/usr/bin/dig-node` + `dig-node.service`   | yes — `systemctl enable --now dig-node` (loopback `127.0.0.1:9778`, runs as the `dig-node` system account, cache at `/var/lib/dig-node`) |
 | `dig-store` | `/usr/bin/dig-store` + `/usr/bin/digs` (+ `/usr/bin/digstore` compat symlink) | no — just the CLI on `PATH` |
+| `dig-dns`  | upstream's own package (`/usr/bin/dig-dns`, `/usr/bin/digd`)  | per upstream's unit — this repo passes the maintainer-built `.deb` through unchanged |
+| `dig-app`  | `/usr/bin/dig-app` + `/usr/bin/dign`                          | no — the HEADLESS build plus the `dign` CLI on `PATH` |
 
 `digs` is a first-class alias binary for `dig-store` — `digs <args>` behaves identically
 to `dig-store <args>`. It ships in the same upstream release tarball as `dig-store` and
@@ -103,6 +106,8 @@ time. The asset names packaging expects are declared per package in `config.sh`:
 | ---------- | ------------------------ | ----------------------------------------------------- |
 | `dig-store` | `DIG-Network/digs` | `dig-store-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` (contains `dig-store` + `digs` + a `digstore` compat entry) |
 | `dig-node` | `DIG-Network/dig-node`   | `dig-node-<ver>-linux-{x64,arm64}` (bare binary)       |
+| `dig-app`  | `DIG-Network/dig-app`    | `dig-app-<ver>-linux-{x64,arm64}-headless` (bare binary) + `dign-<ver>-linux-{x64,arm64}` |
+| `dig-dns`  | `DIG-Network/dig-dns`    | `dig-dns_<ver>-1_{amd64,arm64}.deb` — the upstream-built package, ingested verbatim |
 
 **Asset availability:**
 
