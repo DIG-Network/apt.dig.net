@@ -40,7 +40,7 @@
       "@type": "SoftwareApplication",
       "name": "DIG Network APT repository",
       "url": "https://apt.dig.net/",
-      "description": "Signed APT repository for the DIG Network ecosystem on Ubuntu/Debian: dig-node (the node service), dig-store (the store CLI), dig-dns (the local DNS responder) and dig-app (the headless app and dign CLI).",
+      "description": "Signed APT repository for the DIG Network ecosystem on Ubuntu/Debian: dig-node (the node service), dig-store (the store CLI), dig-dns (the local DNS responder) and dig-app (the headless app).",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Debian, Ubuntu",
       "isAccessibleForFree": true,
@@ -151,6 +151,13 @@
       }
       footer a { color: var(--fg2); }
       .version-tag { margin-top: 0.6rem; font-size: 0.78rem; }
+      /* Architecture caveat: prominent enough that an arm64 reader cannot run the
+         amd64 command by mistake, since apt aborts wholesale on one missing package. */
+      .note {
+        border-left: 3px solid var(--border);
+        padding: 0.1rem 0 0.1rem 0.9rem;
+        color: var(--fg2);
+      }
 
       /* ---------- skip link + focus visibility (WCAG 2.2 AA: 2.4.1, 2.4.11) ---------- */
       .skip-link {
@@ -192,7 +199,7 @@
         <strong>dig-node</strong> (the node service, run via systemd),
         <strong>dig-store</strong> (the content-addressable store CLI),
         <strong>dig-dns</strong> (the local DNS responder) and
-        <strong>dig-app</strong> (the headless app and the <code>dign</code> CLI).
+        <strong>dig-app</strong> (the headless app).
       </p>
     </header>
     <main id="main-content" tabindex="-1">
@@ -204,12 +211,25 @@ curl -fsSL https://apt.dig.net/dig.gpg | sudo gpg --dearmor -o /usr/share/keyrin
 echo "deb [signed-by=/usr/share/keyrings/dig.gpg] https://apt.dig.net stable main" \
   | sudo tee /etc/apt/sources.list.d/dig.list
 
-# 3. Install
+# 3. Install (x86_64 / amd64)
 sudo apt update
 sudo apt install dig-node dig-store dig-dns dig-app
 
+# 3b. On arm64, install only what is published for it (see below)
+sudo apt install dig-node dig-store
+
 # 4. The node runs as a systemd service
 systemctl status dig-node</code></pre>
+
+      <p data-testid="arch-note" class="note">
+        <strong>arm64:</strong> only <code>dig-node</code> and
+        <code>dig-store</code> are published for arm64 today.
+        <code>dig-dns</code> and <code>dig-app</code> are amd64-only, and
+        <code>apt</code> aborts the entire transaction when any named package is
+        unavailable — so asking for all four on arm64 installs
+        <em>nothing</em>. Install the two above; the others appear automatically
+        once upstream publishes arm64 builds.
+      </p>
 
       <h2>What gets installed</h2>
       <ul>
@@ -220,10 +240,9 @@ systemctl status dig-node</code></pre>
           <code>127.0.0.1:9778</code>). It serves the verified
           <code>chia://</code> content a DIG browser or extension opens.</li>
         <li><code>dig-dns</code> — the local DNS responder, packaged upstream
-          (binaries <code>dig-dns</code> and <code>digd</code>).</li>
-        <li><code>dig-app</code> — the headless DIG app plus the
-          <code>dign</code> command-line client. The desktop build is not
-          distributed through apt.</li>
+          (binaries <code>dig-dns</code> and <code>digd</code>); amd64 only today.</li>
+        <li><code>dig-app</code> — the headless DIG app (amd64 only today).
+          The desktop build is not distributed through apt.</li>
         <li><code>dig-store</code> — the <code>dig-store</code> CLI on your
           <code>PATH</code> (with a transitional <code>digstore</code> alias).</li>
       </ul>

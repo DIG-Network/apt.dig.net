@@ -3,7 +3,7 @@
 The DIG Network **APT repository** + its AWS infrastructure. Ubuntu/Debian users
 install the DIG ecosystem with `apt` — `dig-node` (the node service, run via systemd),
 `dig-store` (the content-addressable store CLI), `dig-dns` (the local DNS responder) and
-`dig-app` (the headless app plus the `dign` CLI) — from a flat, GPG-signed apt
+`dig-app` (the headless app) — from a flat, GPG-signed apt
 repository served at **https://apt.dig.net**.
 
 ---
@@ -18,9 +18,13 @@ curl -fsSL https://apt.dig.net/dig.gpg | sudo gpg --dearmor -o /usr/share/keyrin
 echo "deb [signed-by=/usr/share/keyrings/dig.gpg] https://apt.dig.net stable main" \
   | sudo tee /etc/apt/sources.list.d/dig.list
 
-# 3. Install
+# 3. Install (x86_64 / amd64)
 sudo apt update
 sudo apt install dig-node dig-store dig-dns dig-app
+
+# 3b. On arm64 only these two are published today — naming an unavailable
+#     package makes apt abort the whole transaction and install nothing.
+sudo apt install dig-node dig-store
 
 # 4. The node runs as a systemd service
 systemctl status dig-node
@@ -33,7 +37,7 @@ systemctl status dig-node
 | `dig-node` | `/usr/bin/dig-node` + `dig-node.service`   | yes — `systemctl enable --now dig-node` (loopback `127.0.0.1:9778`, runs as the `dig-node` system account, cache at `/var/lib/dig-node`) |
 | `dig-store` | `/usr/bin/dig-store` + `/usr/bin/digs` (+ `/usr/bin/digstore` compat symlink) | no — just the CLI on `PATH` |
 | `dig-dns`  | upstream's own package (`/usr/bin/dig-dns`, `/usr/bin/digd`)  | per upstream's unit — this repo passes the maintainer-built `.deb` through unchanged |
-| `dig-app`  | `/usr/bin/dig-app` + `/usr/bin/dign`                          | no — the HEADLESS build plus the `dign` CLI on `PATH` |
+| `dig-app`  | `/usr/bin/dig-app`                                            | no — the HEADLESS build on `PATH` (amd64 only today) |
 
 `digs` is a first-class alias binary for `dig-store` — `digs <args>` behaves identically
 to `dig-store <args>`. It ships in the same upstream release tarball as `dig-store` and
@@ -106,7 +110,7 @@ time. The asset names packaging expects are declared per package in `config.sh`:
 | ---------- | ------------------------ | ----------------------------------------------------- |
 | `dig-store` | `DIG-Network/digs` | `dig-store-<ver>-{x86_64,aarch64}-unknown-linux-gnu.tar.gz` (contains `dig-store` + `digs` + a `digstore` compat entry) |
 | `dig-node` | `DIG-Network/dig-node`   | `dig-node-<ver>-linux-{x64,arm64}` (bare binary)       |
-| `dig-app`  | `DIG-Network/dig-app`    | `dig-app-<ver>-linux-{x64,arm64}-headless` (bare binary) + `dign-<ver>-linux-{x64,arm64}` |
+| `dig-app`  | `DIG-Network/dig-app`    | `dig-app-<ver>-linux-x64-headless` (bare binary; no linux-arm64 published) |
 | `dig-dns`  | `DIG-Network/dig-dns`    | `dig-dns_<ver>-1_{amd64,arm64}.deb` — the upstream-built package, ingested verbatim |
 
 **Asset availability:**
@@ -121,8 +125,13 @@ time. The asset names packaging expects are declared per package in `config.sh`:
   release that predates it). The `.deb` additionally ships a `/usr/bin/digstore` →
   `dig-store` compat symlink (`PKG_dig_store_COMPAT_SYMLINKS`).
 - `DIG-Network/dig-node`'s `release.yml` publishes raw `dig-node-<ver>-linux-{x64,arm64}`
-  binaries on a tag — which is what `config.sh` targets. (No `linux-arm64` asset is
-  published yet, so arm64 is skipped non-fatally; see the note below.)
+  binaries on a tag — which is what `config.sh` targets. Both arches are published
+  (verified on v0.126.1), so dig-node builds for amd64 and arm64.
+- `DIG-Network/dig-app` publishes no `linux-arm64` headless binary, and
+  `DIG-Network/dig-dns` publishes no arm64 `.deb`; both are skipped non-fatally, so the
+  arm64 apt repo carries `dig-node` and `dig-store` only. Naming an unavailable package
+  makes `apt` abort the whole transaction, which is why the install command above is
+  split per arch.
 
 The build resolves each template; if the asset is absent it **skips** that package
 (non-fatal), and the apt repo is published with whatever debs DID build. The pipeline

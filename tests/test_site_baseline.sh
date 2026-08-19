@@ -70,6 +70,25 @@ check "index.html has exactly one <h1>" "1" "$h1_count"
 contains "index.html defines :focus-visible styling" "$html" ":focus-visible"
 contains "index.html respects prefers-reduced-motion" "$html" "prefers-reduced-motion"
 
+# --- arch honesty: the install CTA must not tell an arm64 reader to run a command
+# that installs NOTHING. apt aborts the entire transaction when any named package is
+# unavailable, and dig-dns + dig-app publish no arm64 build today, so the unqualified
+# four-package command is a no-op on arm64 rather than a partial install. The site
+# therefore has to offer an arm64 command naming only arm64-published packages, and
+# say why. Asserted on the extracted arm64 line, not on the page as a whole: the page
+# legitimately mentions dig-app elsewhere, so a page-wide search would pass on a page
+# whose arm64 command still named it.
+arm64_cmd="$(printf '%s' "$html" | grep -A1 '# 3b' | grep 'apt install' || true)"
+contains "index.html offers an arm64 install command" "$arm64_cmd" "apt install"
+not_contains "the arm64 command omits dig-dns (no arm64 .deb published)" "$arm64_cmd" "dig-dns"
+not_contains "the arm64 command omits dig-app (no linux-arm64 build published)" "$arm64_cmd" "dig-app"
+contains "the arm64 command still installs dig-node" "$arm64_cmd" "dig-node"
+contains "the arm64 command still installs dig-store" "$arm64_cmd" "dig-store"
+arch_note="$(printf '%s' "$html" | awk '/data-testid="arch-note"/,/<\/p>/')"
+contains "the arch note names dig-dns as unavailable on arm64" "$arch_note" "dig-dns"
+contains "the arch note names dig-app as unavailable on arm64" "$arch_note" "dig-app"
+contains "the arch note explains that apt aborts the whole transaction" "$arch_note" "aborts"
+
 # --- Makefile wiring: site/sitemap.xml + robots.txt actually get published ---
 makefile="$(cat "$ROOT/Makefile")"
 contains "Makefile copies sitemap.xml into dist" "$makefile" "sitemap.xml"
