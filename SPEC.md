@@ -21,7 +21,8 @@ control metadata, service layout, and (for dig-node) the loopback bind address �
 data entry there. Adding or changing a package MUST be a data edit to `config.sh`, not a
 code change to the builder.
 
-The declared set of packages is `$APT_PACKAGES` (currently `dig-store dig-node`). A
+The declared set of packages is `$APT_PACKAGES` (currently `dig-store dig-node dig-dns
+dig-app`). A
 package id containing `-` maps to a variable key segment with `-`→`_` (`dig-node` →
 `PKG_dig_node_*`), resolved through the single accessor `pkg_var PKG SUFFIX`.
 
@@ -59,6 +60,29 @@ present, else the default map. (dig-node overrides to Node's `x64`/`arm64` namin
 | ----------- | ----------------------- | ------------------------------------------------------- | -------------- |
 | `dig-store` | `DIG-Network/digs` | `dig-store-{ver}-{arch}-unknown-linux-gnu.tar.gz`       | `dig-store`    |
 | `dig-node`  | `DIG-Network/dig-node`  | `dig-node-{ver}-linux-{arch}` (bare binary, no archive) | (bare)         |
+| `dig-app`   | `DIG-Network/dig-app`   | `dig-app-{ver}-linux-{arch}-headless` (bare binary)      | (bare)         |
+| `dig-dns`   | `DIG-Network/dig-dns`   | none — ingested as a prebuilt `.deb` (§2.4)             | n/a            |
+
+### 2.3 Extra binaries published as their own assets
+
+`PKG_<pkg>_EXTRA_ASSET_BINS` is a space-separated list of `NAME:TEMPLATE` entries naming
+extra binaries that upstream publishes as SEPARATE release assets rather than inside the
+package's own archive. Each MUST be resolved against the same tag and arch token as the
+main asset and downloaded independently. Their on-disk placement is §3.2's; the
+distinction here is only where the bytes come from. `dig-app`'s `dign` CLI takes this
+path. A non-resolving entry MUST be a non-fatal skip.
+
+### 2.4 Prebuilt packages — passthrough
+
+A package declaring `PKG_<pkg>_PREBUILT_DEB_TEMPLATE` publishes its own
+maintainer-authored Debian package upstream. Such a package MUST be copied into the pool
+byte-identically under its published filename, and MUST NOT be rebuilt: its control
+metadata, service unit and defaults are upstream's. The builder MUST ignore every rebuild
+field for that package, and the template's `{arch}` MUST be substituted with the DEBIAN
+architecture, not the token map of §2.1.
+
+`dig-dns` takes this path (`dig-dns_{ver}-1_{arch}.deb`). Its arm64 package is not
+published today and is skipped non-fatally.
 
 `PKG_<pkg>_ARCHIVE_BIN_PATH` is the path of the binary inside the downloaded archive; an
 empty value means the asset IS the bare binary (no unpack). A `.tar.gz`/`.tgz`/`.zip`
@@ -94,6 +118,7 @@ Debian upstream version) to `~`, which sorts BEFORE the release in dpkg ordering
 ### 3.2 Extra binaries and compat symlinks
 
 `PKG_<pkg>_EXTRA_BINS` names additional executables shipped from the SAME upstream archive
+(see §2.3 for the separately-published variant)
 alongside the main binary, installed under `/usr/bin`. An extra binary that a given
 upstream release predates MUST be skipped non-fatally. `PKG_<pkg>_COMPAT_SYMLINKS` names
 `/usr/bin` symlinks pointing at the main binary (relative link, same directory). dig-store
@@ -167,7 +192,30 @@ deb [signed-by=/usr/share/keyrings/dig.gpg] https://apt.dig.net stable main
 
 ---
 
-## 5. Machine-readable surface
+## 5. Freshness — when the published index is rebuilt
+
+Every package's version is resolved at BUILD time from its publishing repo's
+`releases/latest`; no version is pinned in this repository. The published index is
+therefore exactly as fresh as the last deploy run, and staleness is a scheduling
+property, not a data one.
+
+The deploy workflow MUST run on all four of:
+
+| Trigger | Role |
+| ------- | ---- |
+| `push` on `v*` | this repository's own releases |
+| `schedule` (daily) | the BACKSTOP that bounds staleness with no cross-repo wiring |
+| `repository_dispatch` type `upstream-release` | the fast path for a publishing repo to call on release |
+| `workflow_dispatch` | manual re-ingest |
+
+The deploy job MUST NOT be conditioned on the triggering event, or a trigger would
+produce a run that skips every job and still reports `completed`.
+
+A dispatch sent to a repository with no matching listener returns `204` exactly as a
+delivered one does, so a sender alone proves nothing: the schedule is what bounds
+staleness, and the listener is what makes a sender meaningful.
+
+## 6. Machine-readable surface
 
 The published root MUST expose `llms.txt`, `sitemap.xml`, `robots.txt`, and `feed.xml`
 (an Atom feed of currently published packages, generated at build time). The static site
