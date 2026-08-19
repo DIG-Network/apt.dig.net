@@ -154,14 +154,42 @@ extract_binary() {
   return "$rc"
 }
 
+# ingest_prebuilt PKG TAG POOL_DIR -> copy each arch's upstream-built .deb into the
+# pool verbatim. Used by a package that publishes its own maintainer-authored Debian
+# package (dig-dns): the control metadata, the systemd unit and the resolver defaults
+# are upstream's to state, and re-deriving them here would be a second, divergent
+# packaging of the same daemon. The filename is kept exactly as published so the
+# artifact in the pool is byte-identical to the one on the release page.
+#
+# The template is keyed on the DEBIAN arch, not the Rust-triple token map, because
+# that is how a Debian package is named. A missing arch is a non-fatal skip, matching
+# the rebuild path.
+ingest_prebuilt() {
+  local pkg="$1" tag="$2" pool="$3" repo tmpl arch name any=0
+  repo="$(pkg_var "$pkg" REPO)"
+  tmpl="$(pkg_var "$pkg" PREBUILT_DEB_TEMPLATE)"
+  for arch in $APT_ARCHES; do
+    name="$(asset_name "$tmpl" "$tag" "$arch")"
+    if ! fetch_asset "$repo" "$tag" "$name" "$pool/$name"; then
+      rm -f "$pool/$name"
+      warn "$pkg: no prebuilt .deb '$name' for $arch in $repo@$tag - skipping this arch."
+      continue
+    fi
+    log "$pkg: ingested upstream $name"
+    any=1
+  done
+  [ "$any" = 1 ] || warn "$pkg: no archs published a prebuilt .deb."
+}
+
 # build_one PKG POOL_DIR -> resolve + download + stage every available arch.
 build_one() {
   local pkg="$1" pool="$2"
-  local repo tag tmpl inner extra_bins override_tag override_tmpl
+  local repo tag tmpl inner extra_bins prebuilt override_tag override_tmpl
   repo="$(pkg_var "$pkg" REPO)"
   tmpl="$(pkg_var "$pkg" ASSET_TEMPLATE)"
   inner="$(pkg_var "$pkg" ARCHIVE_BIN_PATH)"
   extra_bins="$(pkg_var "$pkg" EXTRA_BINS)"
+  prebuilt="$(pkg_var "$pkg" PREBUILT_DEB_TEMPLATE)"
 
   # Per-package env overrides (UPPERCASED, '-'->'_'): <PKG>_TAG / <PKG>_ASSET_TEMPLATE.
   local envpkg
@@ -179,6 +207,13 @@ build_one() {
     warn "$pkg: $repo has no resolvable release tag yet — skipping (no .deb built)."
     return 0
   fi
+  # A package that ships its own .deb never enters the rebuild path below.
+  if [ -n "$prebuilt" ]; then
+    log "$pkg: ingesting upstream .deb from $repo@$tag"
+    ingest_prebuilt "$pkg" "$tag" "$pool"
+    return 0
+  fi
+
   log "$pkg: building from $repo@$tag"
 
   local arch upstream name dl bin built any=0 work

@@ -12,9 +12,29 @@ name: deploy
 #      CI_DEPLOY_ROLE_ARN. Without them the build is verified and the sync is skipped.
 #
 # So a push pre-provisioning builds + verifies and then no-ops cleanly (green).
+# WHEN this runs matters as much as what it does. Each component's version is
+# resolved at BUILD time from its upstream `releases/latest`, so the published index
+# is only ever as fresh as the last run of this workflow. Firing on this repo's own
+# `v*` tags alone is what let the index serve dig-node 0.99.1 while upstream shipped
+# 0.126.1 — 27 minors of drift with nothing red anywhere (#425).
+#
+#   - schedule          the BACKSTOP that bounds staleness with no cross-repo wiring.
+#                       06:00 UTC daily; a run that finds no new upstream tag rebuilds
+#                       byte-equivalent debs and syncs a no-op.
+#   - repository_dispatch  the FAST path, for an upstream release workflow to call the
+#                       moment it publishes (`event_type: upstream-release`). NOTE: no
+#                       upstream repo sends this yet — the listener is live so a sender
+#                       can be added without a second apt.dig.net release, and the
+#                       schedule is what actually bounds staleness until then. A
+#                       dispatch to a repo with no listener returns 204 exactly like a
+#                       delivered one, so a sender alone would prove nothing.
 on:
   push:
     tags: ['v*']
+  schedule:
+    - cron: '0 6 * * *'
+  repository_dispatch:
+    types: [upstream-release]
   workflow_dispatch: {}
 
 # Serialize: never let two runs race on `s3 sync --delete` (a delete-sweep could drop
