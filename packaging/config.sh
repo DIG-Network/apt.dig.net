@@ -143,6 +143,57 @@ PKG_dig_node_CACHE_DIR="/var/lib/dig-node"
 PKG_dig_node_HOST="127.0.0.1"
 PKG_dig_node_PORT="9778"
 
+# ---- dig-dns (the local DNS responder; ingested as its OWN upstream .deb) ----------
+#
+# dig-dns is the one component that publishes a maintainer-authored Debian package
+# (`dig-dns_<ver>-1_<debarch>.deb`) alongside its raw binaries. This repo therefore
+# PASSES IT THROUGH rather than re-deriving a .deb from the bare binary: the upstream
+# package already carries the service unit, user and resolver configuration that only
+# the dig-dns maintainers can state correctly, and a second, divergent packaging of a
+# daemon is precisely the byte-drift this ecosystem forbids.
+#
+# A package declaring PREBUILT_DEB_TEMPLATE takes the passthrough path in build-deb.sh
+# and ignores every rebuild field (ASSET_TEMPLATE, SERVICE, DEPENDS, the DESC_* pair):
+# the control metadata is upstream's. The template is keyed on the DEBIAN arch, not the
+# Rust-triple token map, because that is how the upstream asset is named. arm64 has no
+# published .deb today and is skipped non-fatally, exactly as a missing binary is.
+PKG_dig_dns_REPO="DIG-Network/dig-dns"
+PKG_dig_dns_BIN="dig-dns"
+PKG_dig_dns_PREBUILT_DEB_TEMPLATE="dig-dns_{ver}-1_{arch}.deb"
+
+# ---- dig-app (the headless node app + the `dign` CLI) ------------------------------
+#
+# apt serves the HEADLESS build, not the desktop one. The desktop binary is a GUI app
+# whose runtime libraries would have to appear in Depends: for the package to install
+# at all, and a .deb that fails to configure is worse for a stranger than no package.
+# The headless variant is a self-contained binary with the same libc-only footprint as
+# dig-node. A desktop `dig-app` package is separate, deliberate work (it needs a real
+# dependency audit, a .desktop entry and an icon) and is NOT what this entry ships.
+#
+# `dign` is the CLI a person actually types, and upstream publishes it as its OWN
+# release asset rather than inside the dig-app archive — so it travels via
+# EXTRA_ASSET_BINS (a separate download) and not EXTRA_BINS (a member of the same
+# archive). Without it `apt install dig-app` would land a daemon with no command.
+PKG_dig_app_REPO="DIG-Network/dig-app"
+PKG_dig_app_BIN="dig-app"
+PKG_dig_app_SECTION="net"
+PKG_dig_app_DEPENDS="libc6"
+PKG_dig_app_HOMEPAGE="https://dig.net"
+PKG_dig_app_MAINTAINER="DIG Network <packages@dig.net>"
+PKG_dig_app_DESC_SHORT="DIG Network app (headless build) and the dign CLI"
+PKG_dig_app_DESC_LONG=" dig-app is the DIG Network application: it manages profiles and stores,
+ talks to a local dig-node, and reads and publishes DIG content. This package
+ ships the HEADLESS build, for servers and hosts with no desktop session, plus
+ the dign command-line client."
+PKG_dig_app_SERVICE="no"
+PKG_dig_app_ASSET_TEMPLATE="dig-app-{ver}-linux-{arch}-headless"
+PKG_dig_app_ASSET_ARCH_amd64="x64"
+PKG_dig_app_ASSET_ARCH_arm64="arm64"
+PKG_dig_app_ARCHIVE_BIN_PATH=""
+# Extra binaries that are their own release assets: "NAME:TEMPLATE" entries, resolved
+# and downloaded independently and installed under /usr/bin beside BIN.
+PKG_dig_app_EXTRA_ASSET_BINS="dign:dign-{ver}-linux-{arch}"
+
 # The packages this repo produces (underscored keys; '-' is not valid in a var name,
 # so dig-node's keys use dig_node — see pkg_var()).
-APT_PACKAGES="dig-store dig-node"
+APT_PACKAGES="dig-store dig-node dig-dns dig-app"
